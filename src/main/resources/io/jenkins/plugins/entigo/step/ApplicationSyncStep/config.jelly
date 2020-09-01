@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+    <f:block>
+        <f:entry field="name" title="${%ArgoCD application name}">
+            <f:textbox/>
+        </f:entry>
+        <f:entry field="waitTimeout" title="${%ArgoCD action wait timeout}">
+            <f:number />
+        </f:entry>
+        <f:entry field="async" title="${%Don't wait for sync to complete}">
+            <f:checkbox />
+        </f:entry>
+    </f:block>
+</j:jelly>
