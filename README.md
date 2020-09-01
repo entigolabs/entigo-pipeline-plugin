@@ -69,3 +69,10 @@ Add next lines to the settings.xml which is usually located in user home .m2 dir
   </mirrors>
 </settings>
 ```
+
+Plugin development uses the Maven HPI Plugin.
+Development environment is ran through HPI which launches a Jenkins instance with the plugin by default on `http://localhost:8080`
+
+`mvn hpi:run`
+
+Debugging is possible by adding that command as Run/Debug configuration in IntelliJ and then debugging like a regular Java application.
