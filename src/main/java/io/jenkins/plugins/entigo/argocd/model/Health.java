@@ -6,7 +6,12 @@ package io.jenkins.plugins.entigo.argocd.model;
  */
 public enum Health {
 
-    HEALTHY("Healthy");
+    HEALTHY("Healthy"),
+    PROGRESSING("Progressing"),
+    SUSPENDED("Suspended"),
+    DEGRADED("Degraded"),
+    MISSING("Missing"),
+    UNKNOWN("Unknown");
 
     private final String status;
 

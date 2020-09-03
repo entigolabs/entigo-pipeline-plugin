@@ -54,21 +54,29 @@ public class ArgoCDClientImpl implements ArgoCDClient {
 
     public ArgoCDClientImpl(String argoUri, String authToken, boolean ignoreCertificateErrors)
             throws GeneralSecurityException {
+        this.restClient = buildClient(ignoreCertificateErrors);
+        this.apiTarget = restClient.target(UriBuilder.fromUri(argoUri).path(ARGOCD_API_PATH))
+                .register(new Oauth2AuthenticationFilter(authToken));
+    }
+
+    private Client buildClient(boolean ignoreCertificateErrors) throws GeneralSecurityException {
         ClientBuilder clientBuilder = ClientBuilder.newBuilder()
                 .register(JacksonJsonProvider.class)
                 .register(JacksonConfiguration.class);
 
         if (ignoreCertificateErrors) {
-            TrustManager[] trustManager = new X509TrustManager[] { new NoCheckTrustManager() };
-            SSLContext sslcontext = SSLContext.getInstance("SSL");
-            sslcontext.init(null, trustManager, null);
-            clientBuilder.sslContext(sslcontext)
-                    .hostnameVerifier((s1, s2) -> true);
+            disableCertificateErrors(clientBuilder);
         }
 
-        this.restClient = clientBuilder.build();
-        this.apiTarget = restClient.target(UriBuilder.fromUri(argoUri).path(ARGOCD_API_PATH))
-                .register(new Oauth2AuthenticationFilter(authToken));
+        return clientBuilder.build();
+    }
+
+    private void disableCertificateErrors(ClientBuilder clientBuilder) throws GeneralSecurityException {
+        TrustManager[] trustManager = new X509TrustManager[] { new NoCheckTrustManager() };
+        SSLContext sslcontext = SSLContext.getInstance("SSL");
+        sslcontext.init(null, trustManager, null);
+        clientBuilder.sslContext(sslcontext)
+                .hostnameVerifier((s1, s2) -> true);
     }
 
     @Override

@@ -6,7 +6,9 @@ package io.jenkins.plugins.entigo.argocd.model;
  */
 public enum Sync {
 
-    SYNCED("Synced");
+    SYNCED("Synced"),
+    OUT_OF_SYNC("OutOfSync"),
+    UNKNOWN("Unknown");
 
     private final String status;
 

@@ -43,14 +43,13 @@ public class ArgoCDConfiguration extends AbstractDescribableImpl<ArgoCDConfigura
 
     private final String uri;
     private final String credentialsId;
-    private final boolean ignoreCertificateErrors;
+    private boolean ignoreCertificateErrors = false;
     private Long appWaitTimeout = 300L;
 
     @DataBoundConstructor
-    public ArgoCDConfiguration(String uri, String credentialsId, boolean ignoreCertificateErrors) {
+    public ArgoCDConfiguration(String uri, String credentialsId) {
         this.uri = uri;
         this.credentialsId = credentialsId;
-        this.ignoreCertificateErrors = ignoreCertificateErrors;
     }
 
     public String getUri() {
@@ -63,6 +62,11 @@ public class ArgoCDConfiguration extends AbstractDescribableImpl<ArgoCDConfigura
 
     public boolean isIgnoreCertificateErrors() {
         return ignoreCertificateErrors;
+    }
+
+    @DataBoundSetter
+    public void setIgnoreCertificateErrors(boolean ignoreCertificateErrors) {
+        this.ignoreCertificateErrors = ignoreCertificateErrors;
     }
 
     public Long getAppWaitTimeout() {
@@ -153,7 +157,8 @@ public class ArgoCDConfiguration extends AbstractDescribableImpl<ArgoCDConfigura
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             ArgoCDClient argoCDClient = null;
             try {
-                ArgoCDConfiguration configuration = new ArgoCDConfiguration(uri, credentialsId, ignoreCertificateErrors);
+                ArgoCDConfiguration configuration = new ArgoCDConfiguration(uri, credentialsId);
+                configuration.setIgnoreCertificateErrors(ignoreCertificateErrors);
                 argoCDClient = new ArgoCDClientImpl(uri, configuration.getApiToken(),
                         ignoreCertificateErrors);
                 UserInfo userInfo = argoCDClient.getUserInfo();

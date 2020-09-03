@@ -29,7 +29,7 @@ import java.io.IOException;
 public class ApplicationSyncStep extends Builder implements SimpleBuildStep {
 
     private final String name;
-    private Long waitTimeout;
+    private Integer waitTimeout;
     private Boolean async = false;
 
     @DataBoundConstructor
@@ -51,11 +51,11 @@ public class ApplicationSyncStep extends Builder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setWaitTimeout(Long waitTimeout) {
+    public void setWaitTimeout(Integer waitTimeout) {
         this.waitTimeout = waitTimeout;
     }
 
-    public Long getWaitTimeout() {
+    public Integer getWaitTimeout() {
         return waitTimeout;
     }
 
@@ -65,7 +65,7 @@ public class ApplicationSyncStep extends Builder implements SimpleBuildStep {
         ArgoCDService argoCDService = ExtensionList.lookupSingleton(ArgoCDService.class);
         argoCDService.syncApplication(name);
         Long timeout = waitTimeout == null ? PluginConfiguration.get().getArgoCDConfiguration().getAppWaitTimeout()
-                : waitTimeout;
+                : Long.valueOf(waitTimeout);
         if (!async) {
             listener.getLogger().println("Waiting for application to sync, timeout is " + timeout + " seconds");
             argoCDService.waitApplicationStatus(name, timeout);
