@@ -1,8 +1,6 @@
 package io.jenkins.plugins.entigo.argocd.service;
 
 import hudson.AbortException;
-import hudson.Extension;
-import hudson.ExtensionList;
 import io.jenkins.plugins.entigo.argocd.client.ArgoCDClient;
 import io.jenkins.plugins.entigo.argocd.model.*;
 import io.jenkins.plugins.entigo.rest.ResponseException;
@@ -14,13 +12,12 @@ import java.util.concurrent.*;
  * Author: Märt Erlenheim
  * Date: 2020-08-18
  */
-@Extension
 public class ArgoCDService {
 
     private final ArgoCDClient argoCDClient;
 
-    public ArgoCDService() {
-        this.argoCDClient = ExtensionList.lookupSingleton(ArgoCDClient.class);
+    public ArgoCDService(ArgoCDClient argoCDClient) {
+        this.argoCDClient = argoCDClient;
     }
 
     public void syncApplication(String applicationName) throws AbortException {

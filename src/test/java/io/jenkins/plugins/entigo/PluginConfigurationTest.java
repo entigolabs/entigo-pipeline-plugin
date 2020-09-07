@@ -1,10 +1,12 @@
 package io.jenkins.plugins.entigo;
 
 import com.gargoylesoftware.htmlunit.html.*;
-import io.jenkins.plugins.entigo.argocd.config.ArgoCDConfiguration;
+import io.jenkins.plugins.entigo.argocd.config.ArgoCDConnection;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
+
+import java.util.Collections;
 
 import static org.junit.Assert.*;
 
@@ -16,8 +18,13 @@ public class PluginConfigurationTest {
     @Test
     public void uiAndStorage() {
         rr.then(r -> {
-            assertNull("initially null", PluginConfiguration.get().getArgoCDConfiguration());
+            assertEquals(0, PluginConfiguration.get().getArgoCDConnections().size());
+            // Adds an empty connection which will be populated through the UI
+            PluginConfiguration.get().setArgoCDConnections(Collections.singletonList(
+                    new ArgoCDConnection(null, null, null)));
             HtmlForm config = r.createWebClient().goTo("configure").getFormByName("config");
+            HtmlTextInput nameTextBox = config.getInputByName("_.name");
+            nameTextBox.setText("localhost");
             HtmlTextInput uriTextBox = config.getInputByName("_.uri");
             uriTextBox.setText("https://localhost");
             HtmlSelect credentialsIdSelect = config.getSelectByName("_.credentialsId");
@@ -29,20 +36,20 @@ public class PluginConfigurationTest {
             HtmlNumberInput timeoutInput = config.getInputByName("_.appWaitTimeout");
             timeoutInput.setText("500");
             r.submit(config);
-            ArgoCDConfiguration argoCDConfiguration = PluginConfiguration.get().getArgoCDConfiguration();
-            assertNotNull("must be saved", argoCDConfiguration);
-            assertEquals("https://localhost", argoCDConfiguration.getUri());
-            assertEquals("argoCD", argoCDConfiguration.getCredentialsId());
-            assertEquals(Long.valueOf(500), argoCDConfiguration.getAppWaitTimeout());
-            assertTrue(argoCDConfiguration.isIgnoreCertificateErrors());
+            ArgoCDConnection argoCDConnection = PluginConfiguration.get().getArgoCDConnection("localhost");
+            assertNotNull("must be saved", argoCDConnection);
+            assertEquals("https://localhost", argoCDConnection.getUri());
+            assertEquals("argoCD", argoCDConnection.getCredentialsId());
+            assertEquals(Long.valueOf(500), argoCDConnection.getAppWaitTimeout());
+            assertTrue(argoCDConnection.isIgnoreCertificateErrors());
         });
         rr.then(r -> {
-            ArgoCDConfiguration argoCDConfiguration = PluginConfiguration.get().getArgoCDConfiguration();
-            assertNotNull("must be present after restart", argoCDConfiguration);
-            assertEquals("https://localhost", argoCDConfiguration.getUri());
-            assertEquals("argoCD", argoCDConfiguration.getCredentialsId());
-            assertEquals(Long.valueOf(500), argoCDConfiguration.getAppWaitTimeout());
-            assertTrue(argoCDConfiguration.isIgnoreCertificateErrors());
+            ArgoCDConnection argoCDConnection = PluginConfiguration.get().getArgoCDConnection("localhost");
+            assertNotNull("must be present after restart", argoCDConnection);
+            assertEquals("https://localhost", argoCDConnection.getUri());
+            assertEquals("argoCD", argoCDConnection.getCredentialsId());
+            assertEquals(Long.valueOf(500), argoCDConnection.getAppWaitTimeout());
+            assertTrue(argoCDConnection.isIgnoreCertificateErrors());
         });
     }
 

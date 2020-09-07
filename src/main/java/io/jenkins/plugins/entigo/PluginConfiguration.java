@@ -2,9 +2,14 @@ package io.jenkins.plugins.entigo;
 
 import hudson.Extension;
 import hudson.ExtensionList;
-import io.jenkins.plugins.entigo.argocd.config.ArgoCDConfiguration;
+import io.jenkins.plugins.entigo.argocd.config.ArgoCDConnection;
 import jenkins.model.GlobalConfiguration;
 import org.kohsuke.stapler.DataBoundSetter;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Author: Märt Erlenheim
@@ -17,20 +22,34 @@ public class PluginConfiguration extends GlobalConfiguration {
         return ExtensionList.lookupSingleton(PluginConfiguration.class);
     }
 
-    private ArgoCDConfiguration argoCDConfiguration;
+    private List<ArgoCDConnection> argoCDConnections = new ArrayList<>();
+    private transient final Map<String, ArgoCDConnection> argoCDConnectionsMap = new HashMap<>();
 
     public PluginConfiguration() {
         // When Jenkins is restarted, load any saved configuration from disk.
         load();
+        updateArgoCDConnectionsMap();
     }
 
-    public ArgoCDConfiguration getArgoCDConfiguration() {
-        return argoCDConfiguration;
+    public List<ArgoCDConnection> getArgoCDConnections() {
+        return argoCDConnections;
     }
 
     @DataBoundSetter
-    public void setArgoCDConfiguration(ArgoCDConfiguration argoCDConfiguration) {
-        this.argoCDConfiguration = argoCDConfiguration;
+    public void setArgoCDConnections(List<ArgoCDConnection> argoCDConnections) {
+        this.argoCDConnections = argoCDConnections;
+        updateArgoCDConnectionsMap();
         save();
+    }
+
+    public ArgoCDConnection getArgoCDConnection(String connectionName) {
+        return argoCDConnectionsMap.get(connectionName);
+    }
+
+    private void updateArgoCDConnectionsMap() {
+        argoCDConnectionsMap.clear();
+        for (ArgoCDConnection argoCDConnection : argoCDConnections) {
+            argoCDConnectionsMap.put(argoCDConnection.getName(), argoCDConnection);
+        }
     }
 }

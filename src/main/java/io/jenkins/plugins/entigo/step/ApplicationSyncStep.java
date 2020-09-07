@@ -1,7 +1,6 @@
 package io.jenkins.plugins.entigo.step;
 
 import hudson.Extension;
-import hudson.ExtensionList;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
@@ -11,6 +10,8 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import io.jenkins.plugins.entigo.PluginConfiguration;
+import io.jenkins.plugins.entigo.argocd.client.ArgoCDClient;
+import io.jenkins.plugins.entigo.argocd.config.ArgoCDConnectionProperty;
 import io.jenkins.plugins.entigo.argocd.service.ArgoCDService;
 import jenkins.tasks.SimpleBuildStep;
 import org.apache.commons.lang.StringUtils;
@@ -62,9 +63,10 @@ public class ApplicationSyncStep extends Builder implements SimpleBuildStep {
     @Override
     public void perform(Run build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException {
         listener.getLogger().println("Syncing ArgoCD application...");
-        ArgoCDService argoCDService = ExtensionList.lookupSingleton(ArgoCDService.class);
+        ArgoCDClient client = ArgoCDConnectionProperty.getClient(build);
+        ArgoCDService argoCDService = new ArgoCDService(client);
         argoCDService.syncApplication(name);
-        Long timeout = waitTimeout == null ? PluginConfiguration.get().getArgoCDConfiguration().getAppWaitTimeout()
+        Long timeout = waitTimeout == null ? PluginConfiguration.get().getArgoCDConnections().get(0).getAppWaitTimeout()
                 : Long.valueOf(waitTimeout);
         if (!async) {
             listener.getLogger().println("Waiting for application to sync, timeout is " + timeout + " seconds");
