@@ -3,6 +3,7 @@ package io.jenkins.plugins.entigo;
 import hudson.Extension;
 import hudson.ExtensionList;
 import io.jenkins.plugins.entigo.argocd.config.ArgoCDConnection;
+import io.jenkins.plugins.entigo.argocd.config.ArgoCDConnectionsProperty;
 import jenkins.model.GlobalConfiguration;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -22,6 +23,7 @@ public class PluginConfiguration extends GlobalConfiguration {
         return ExtensionList.lookupSingleton(PluginConfiguration.class);
     }
 
+    private ArgoCDConnectionsProperty argoCDConnectionsMatcher;
     private List<ArgoCDConnection> argoCDConnections = new ArrayList<>();
     private transient final Map<String, ArgoCDConnection> argoCDConnectionsMap = new HashMap<>();
 
@@ -40,6 +42,20 @@ public class PluginConfiguration extends GlobalConfiguration {
         this.argoCDConnections = argoCDConnections;
         updateArgoCDConnectionsMap();
         save();
+    }
+
+    public ArgoCDConnectionsProperty getArgoCDConnectionsMatcher() {
+        return argoCDConnectionsMatcher;
+    }
+
+    @DataBoundSetter
+    public void setArgoCDConnectionsMatcher(ArgoCDConnectionsProperty argoCDConnectionsMatcher) {
+        this.argoCDConnectionsMatcher = argoCDConnectionsMatcher;
+        save();
+    }
+
+    public Map<String, ArgoCDConnection> getArgoCDConnectionsMap() {
+        return argoCDConnectionsMap;
     }
 
     public ArgoCDConnection getArgoCDConnection(String connectionName) {

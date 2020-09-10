@@ -1,33 +1,30 @@
 package io.jenkins.plugins.entigo.step;
 
+import com.google.common.collect.ImmutableSet;
+import hudson.EnvVars;
 import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
-import hudson.model.AbstractProject;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.tasks.BuildStepDescriptor;
-import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import io.jenkins.plugins.entigo.PluginConfiguration;
 import io.jenkins.plugins.entigo.argocd.client.ArgoCDClient;
 import io.jenkins.plugins.entigo.argocd.config.ArgoCDConnectionsProperty;
 import io.jenkins.plugins.entigo.argocd.service.ArgoCDService;
-import jenkins.tasks.SimpleBuildStep;
 import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.workflow.steps.*;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.CheckForNull;
-import java.io.IOException;
+import javax.annotation.Nonnull;
+import java.util.Set;
 
 /**
  * Author: Märt Erlenheim
  * Date: 2020-08-26
  */
-public class ApplicationSyncStep extends Builder implements SimpleBuildStep {
+public class ApplicationSyncStep extends Step {
 
     private final String name;
     private Integer waitTimeout;
@@ -61,26 +58,47 @@ public class ApplicationSyncStep extends Builder implements SimpleBuildStep {
     }
 
     @Override
-    public void perform(Run build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException,
-            InterruptedException {
-        listener.getLogger().println("Syncing ArgoCD application...");
-        ArgoCDClient client = ArgoCDConnectionsProperty.getClient(build);
-        ArgoCDService argoCDService = new ArgoCDService(client);
-        argoCDService.syncApplication(name);
-        Long timeout = waitTimeout == null ? PluginConfiguration.get().getArgoCDConnections().get(0).getAppWaitTimeout()
-                : Long.valueOf(waitTimeout);
-        if (!async) {
-            listener.getLogger().println("Waiting for application to sync, timeout is " + timeout + " seconds");
-            argoCDService.waitApplicationStatus(name, timeout);
-            listener.getLogger().println("Application is synced and healthy");
-        } else {
-            listener.getLogger().println("Async mode enabled, skipping waiting for application to sync");
-        }
+    public StepExecution start(StepContext stepContext) {
+        return new ApplicationSyncStepExecution(stepContext, this);
     }
 
-    @Symbol("syncArgoApp")
+    public static class ApplicationSyncStepExecution extends SynchronousStepExecution<Void> {
+
+        private final ApplicationSyncStep step;
+
+        protected ApplicationSyncStepExecution(@Nonnull StepContext context, ApplicationSyncStep step) {
+            super(context);
+            this.step = step;
+        }
+
+        @Override
+        protected Void run() throws Exception {
+            TaskListener listener = getContext().get(TaskListener.class);
+            listener.getLogger().println("Syncing ArgoCD application...");
+            ArgoCDClient client = ArgoCDConnectionsProperty.getClient(getContext().get(Run.class),
+                    getContext().get(EnvVars.class));
+            ArgoCDService argoCDService = new ArgoCDService(client);
+            argoCDService.syncApplication(step.name);
+            Long timeout;
+            if (step.waitTimeout == null) {
+                timeout = PluginConfiguration.get().getArgoCDConnections().get(0).getAppWaitTimeout();
+            } else {
+                timeout = Long.valueOf(step.waitTimeout);
+            }
+            if (!step.async) {
+                listener.getLogger().println("Waiting for application to sync, timeout is " + timeout + " seconds");
+                argoCDService.waitApplicationStatus(step.name, timeout);
+                listener.getLogger().println("Application is synced and healthy");
+            } else {
+                listener.getLogger().println("Async mode enabled, skipping waiting for application to sync");
+            }
+            return null;
+        }
+
+    }
+
     @Extension
-    public static class DescriptorImpl extends BuildStepDescriptor<Builder> {
+    public static class DescriptorImpl extends StepDescriptor {
 
         @Override
         public String getDisplayName() {
@@ -88,11 +106,15 @@ public class ApplicationSyncStep extends Builder implements SimpleBuildStep {
         }
 
         @Override
-        public boolean isApplicable(Class<? extends AbstractProject> t) {
-            return true;
+        public Set<? extends Class<?>> getRequiredContext() {
+            return ImmutableSet.of(TaskListener.class, Run.class, EnvVars.class);
         }
 
-        // Only works with web forms
+        @Override
+        public String getFunctionName() {
+            return "syncArgoApp";
+        }
+
         public FormValidation doCheckName(@QueryParameter String value) {
             if (StringUtils.isEmpty(value)) {
                 return FormValidation.error("Application name is required");

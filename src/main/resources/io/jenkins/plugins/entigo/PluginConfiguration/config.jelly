@@ -11,5 +11,8 @@
                 </f:block>
             </f:repeatableProperty>
         </f:entry>
+        <f:entry>
+            <f:property field="argoCDConnectionsMatcher"/>
+        </f:entry>
     </f:section>
 </j:jelly>
