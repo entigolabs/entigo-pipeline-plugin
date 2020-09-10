@@ -64,7 +64,7 @@ public class ApplicationSyncStep extends Step {
 
     public static class ApplicationSyncStepExecution extends SynchronousStepExecution<Void> {
 
-        private final ApplicationSyncStep step;
+        private final transient ApplicationSyncStep step;
 
         protected ApplicationSyncStepExecution(@Nonnull StepContext context, ApplicationSyncStep step) {
             super(context);
