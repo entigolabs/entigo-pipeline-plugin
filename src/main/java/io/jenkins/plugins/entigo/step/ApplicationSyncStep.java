@@ -1,13 +1,13 @@
 package io.jenkins.plugins.entigo.step;
 
 import com.google.common.collect.ImmutableSet;
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
-import io.jenkins.plugins.entigo.PluginConfiguration;
-import io.jenkins.plugins.entigo.argocd.client.ArgoCDClient;
+import io.jenkins.plugins.entigo.argocd.config.ArgoCDConnection;
 import io.jenkins.plugins.entigo.argocd.config.ArgoCDConnectionsProperty;
 import io.jenkins.plugins.entigo.argocd.service.ArgoCDService;
 import org.apache.commons.lang.StringUtils;
@@ -75,24 +75,24 @@ public class ApplicationSyncStep extends Step {
         protected Void run() throws Exception {
             TaskListener listener = getContext().get(TaskListener.class);
             listener.getLogger().println("Syncing ArgoCD application...");
-            ArgoCDClient client = ArgoCDConnectionsProperty.getClient(getContext().get(Run.class),
+            ArgoCDConnection connection = ArgoCDConnectionsProperty.getConnection(getContext().get(Run.class),
                     getContext().get(EnvVars.class));
-            ArgoCDService argoCDService = new ArgoCDService(client);
+            ArgoCDService argoCDService = new ArgoCDService(connection.getClient());
             argoCDService.syncApplication(step.name);
-            Long timeout;
-            if (step.waitTimeout == null) {
-                timeout = PluginConfiguration.get().getArgoCDConnections().get(0).getAppWaitTimeout();
+            if (step.async) {
+                listener.getLogger().println("Async mode enabled, skip waiting for application to sync");
             } else {
-                timeout = Long.valueOf(step.waitTimeout);
-            }
-            if (!step.async) {
-                listener.getLogger().println("Waiting for application to sync, timeout is " + timeout + " seconds");
-                argoCDService.waitApplicationStatus(step.name, timeout);
-                listener.getLogger().println("Application is synced and healthy");
-            } else {
-                listener.getLogger().println("Async mode enabled, skipping waiting for application to sync");
+                waitApplicationSync(listener, connection, argoCDService);
             }
             return null;
+        }
+
+        private void waitApplicationSync(TaskListener listener, ArgoCDConnection connection,
+                                         ArgoCDService argoCDService) throws AbortException {
+            Long timeout = step.waitTimeout == null ? connection.getAppWaitTimeout() : Long.valueOf(step.waitTimeout);
+            listener.getLogger().println("Waiting for application to sync, timeout is " + timeout + " seconds");
+            argoCDService.waitApplicationStatus(step.name, timeout);
+            listener.getLogger().println("Application is synced and healthy");
         }
 
     }
@@ -102,7 +102,7 @@ public class ApplicationSyncStep extends Step {
 
         @Override
         public String getDisplayName() {
-            return "Sync ArgoCD applications";
+            return "Sync ArgoCD application";
         }
 
         @Override

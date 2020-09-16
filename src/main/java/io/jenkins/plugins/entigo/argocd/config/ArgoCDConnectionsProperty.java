@@ -5,7 +5,6 @@ import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.*;
 import io.jenkins.plugins.entigo.PluginConfiguration;
-import io.jenkins.plugins.entigo.argocd.client.ArgoCDClient;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
@@ -35,17 +34,6 @@ public class ArgoCDConnectionsProperty extends JobProperty<Job<?, ?>> {
         return matchers;
     }
 
-    public ArgoCDClient getClient(String connectionName) throws AbortException {
-        if (StringUtils.isNotEmpty(connectionName)) {
-            ArgoCDConnection connection = PluginConfiguration.get().getArgoCDConnection(connectionName);
-            if (connection != null) {
-                return connection.getClient();
-            }
-        }
-
-        return null;
-    }
-
     public static ArgoCDConnectionsProperty getJobProperty(@NotNull Run<?, ?> build) throws IOException {
         Job<?, ?> job = build.getParent();
         ArgoCDConnectionsProperty property = job.getProperty(ArgoCDConnectionsProperty.class);
@@ -57,18 +45,6 @@ public class ArgoCDConnectionsProperty extends JobProperty<Job<?, ?>> {
             }
         }
         return property;
-    }
-
-    public static  ArgoCDClient getClient(@NotNull Run<?, ?> build, EnvVars envVars) throws IOException {
-        ArgoCDConnectionsProperty property = getJobProperty(build);
-        String connectionName = property.getConnectionName(envVars);
-        ArgoCDClient client = property.getClient(connectionName);
-        if (client == null) {
-            throw new AbortException("Couldn't find an ArgoCD connection with name " + connectionName);
-        } else {
-            LOGGER.fine("Using ArgoCD connection " + connectionName);
-            return client;
-        }
     }
 
     private String getConnectionName(EnvVars envVars) throws AbortException {
@@ -84,6 +60,17 @@ public class ArgoCDConnectionsProperty extends JobProperty<Job<?, ?>> {
         }
 
         throw new AbortException("Couldn't find a matching ArgoCD connection with selector: " + selector);
+    }
+
+    public static ArgoCDConnection getConnection(@NotNull Run<?, ?> build, EnvVars envVars) throws IOException {
+        ArgoCDConnectionsProperty property = getJobProperty(build);
+        String connectionName = property.getConnectionName(envVars);
+        ArgoCDConnection connection = PluginConfiguration.get().getArgoCDConnection(connectionName);
+        if (connection == null) {
+            throw new AbortException("Couldn't find an ArgoCD connection with name " + connectionName);
+        } else {
+            return connection;
+        }
     }
 
     @Extension
