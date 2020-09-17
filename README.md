@@ -1,28 +1,12 @@
-## ArgoCD integration
+## How to use
 
-Before using any ArgoCD pipeline steps make sure ArgoCD endpoint has been configured through the Jenkins System Configuration.
+Plugin functionality has been described in Entigo wiki.
 
-Requires Jenkins Credential with type Secret and value of ArgoCD user authentication token.
+[ArgoCD Integration](https://entigo.atlassian.net/wiki/spaces/PD/pages/1099202561/ArgoCD+Integration)
 
-#### Pipeline steps
+## Building the plugin
 
-##### syncArgoApp
-Sends application sync request to ArgoCD. Parameters:
-
-- name - ArgoCD application name, required
-- async - Step won't wait for application sync to complete. Default `false`
-- waitTimeout - How long will step wait in seconds for sync to complete, aborts the build when time is exceeded. Default taken from Global configuration.
-
-Example usage
-
-```
-syncArgoApp 'application-name'
-syncArgoApp async: false, name: 'application-name', waitTimeout: 600
-```
-
-## Building plugin
-
-Plugin can be built by using Maven install command.
+Plugin can be built by using the Maven install command.
 
 `mvn install`
 

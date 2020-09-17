@@ -2,13 +2,12 @@ package io.jenkins.plugins.entigo.argocd.client;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import hudson.Extension;
 import hudson.cli.NoCheckTrustManager;
-import io.jenkins.plugins.entigo.PluginConfiguration;
 import io.jenkins.plugins.entigo.argocd.model.ApplicationSyncRequest;
 import io.jenkins.plugins.entigo.argocd.model.ApplicationWatchEvent;
 import io.jenkins.plugins.entigo.argocd.model.ErrorResponse;
 import io.jenkins.plugins.entigo.argocd.model.UserInfo;
+import io.jenkins.plugins.entigo.rest.ClientException;
 import io.jenkins.plugins.entigo.rest.JacksonConfiguration;
 import io.jenkins.plugins.entigo.rest.Oauth2AuthenticationFilter;
 import io.jenkins.plugins.entigo.rest.ResponseException;
@@ -38,7 +37,6 @@ import java.util.Map;
  * Author: Märt Erlenheim
  * Date: 2020-08-25
  */
-@Extension
 public class ArgoCDClientImpl implements ArgoCDClient {
 
     private static final String ARGOCD_API_PATH = "api/v1/";
@@ -46,20 +44,13 @@ public class ArgoCDClientImpl implements ArgoCDClient {
     private final Client restClient;
     private final WebTarget apiTarget;
 
-    public ArgoCDClientImpl() throws GeneralSecurityException {
-        this(PluginConfiguration.get().getArgoCDConfiguration().getUri(),
-                PluginConfiguration.get().getArgoCDConfiguration().getApiToken(),
-                PluginConfiguration.get().getArgoCDConfiguration().isIgnoreCertificateErrors());
-    }
-
-    public ArgoCDClientImpl(String argoUri, String authToken, boolean ignoreCertificateErrors)
-            throws GeneralSecurityException {
+    public ArgoCDClientImpl(String argoUri, String authToken, boolean ignoreCertificateErrors) {
         this.restClient = buildClient(ignoreCertificateErrors);
         this.apiTarget = restClient.target(UriBuilder.fromUri(argoUri).path(ARGOCD_API_PATH))
                 .register(new Oauth2AuthenticationFilter(authToken));
     }
 
-    private Client buildClient(boolean ignoreCertificateErrors) throws GeneralSecurityException {
+    private Client buildClient(boolean ignoreCertificateErrors) {
         ClientBuilder clientBuilder = ClientBuilder.newBuilder()
                 .register(JacksonJsonProvider.class)
                 .register(JacksonConfiguration.class);
@@ -71,12 +62,16 @@ public class ArgoCDClientImpl implements ArgoCDClient {
         return clientBuilder.build();
     }
 
-    private void disableCertificateErrors(ClientBuilder clientBuilder) throws GeneralSecurityException {
-        TrustManager[] trustManager = new X509TrustManager[] { new NoCheckTrustManager() };
-        SSLContext sslcontext = SSLContext.getInstance("SSL");
-        sslcontext.init(null, trustManager, null);
-        clientBuilder.sslContext(sslcontext)
-                .hostnameVerifier((s1, s2) -> true);
+    private void disableCertificateErrors(ClientBuilder clientBuilder) {
+        try {
+            TrustManager[] trustManager = new X509TrustManager[] { new NoCheckTrustManager() };
+            SSLContext sslcontext = SSLContext.getInstance("SSL");
+            sslcontext.init(null, trustManager, null);
+            clientBuilder.sslContext(sslcontext)
+                    .hostnameVerifier((s1, s2) -> true);
+        } catch (GeneralSecurityException e) {
+            throw new ClientException(e.getMessage(), e);
+        }
     }
 
     @Override

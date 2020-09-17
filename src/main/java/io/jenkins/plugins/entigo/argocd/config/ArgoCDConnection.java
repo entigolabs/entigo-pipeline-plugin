@@ -5,7 +5,9 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
+import hudson.AbortException;
 import hudson.Extension;
+import hudson.ExtensionList;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.model.Item;
@@ -13,8 +15,9 @@ import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.plugins.entigo.argocd.client.ArgoCDClient;
-import io.jenkins.plugins.entigo.argocd.client.ArgoCDClientImpl;
+import io.jenkins.plugins.entigo.argocd.client.ArgoCDClientBuilder;
 import io.jenkins.plugins.entigo.argocd.model.UserInfo;
+import io.jenkins.plugins.entigo.rest.ClientException;
 import io.jenkins.plugins.entigo.rest.ResponseException;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
@@ -31,7 +34,6 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 import javax.ws.rs.core.UriBuilder;
 
 import java.net.URI;
-import java.security.GeneralSecurityException;
 
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
 
@@ -39,17 +41,24 @@ import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCreden
  * Author: Märt Erlenheim
  * Date: 2020-08-18
  */
-public class ArgoCDConfiguration extends AbstractDescribableImpl<ArgoCDConfiguration> {
+public class ArgoCDConnection extends AbstractDescribableImpl<ArgoCDConnection> {
 
+    private final String name;
     private final String uri;
     private final String credentialsId;
     private boolean ignoreCertificateErrors = false;
     private Long appWaitTimeout = 300L;
+    private transient ArgoCDClient client;
 
     @DataBoundConstructor
-    public ArgoCDConfiguration(String uri, String credentialsId) {
+    public ArgoCDConnection(String name, String uri, String credentialsId) {
+        this.name = name;
         this.uri = uri;
         this.credentialsId = credentialsId;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public String getUri() {
@@ -78,8 +87,24 @@ public class ArgoCDConfiguration extends AbstractDescribableImpl<ArgoCDConfigura
         this.appWaitTimeout = appWaitTimeout;
     }
 
+    public ArgoCDClient getClient() throws AbortException {
+        if (client == null) {
+            try {
+                ArgoCDClientBuilder builder = ExtensionList.lookupSingleton(ArgoCDClientBuilder.class);
+                if (ignoreCertificateErrors) {
+                    client = builder.buildUnsecuredClient(uri, getApiToken());
+                } else {
+                    client = builder.buildSecuredClient(uri, getApiToken());
+                }
+            } catch (ClientException exception) {
+                throw new AbortException("Failed to create an ArgoCD client, message: " + exception.getMessage());
+            }
+        }
+        return client;
+    }
+
     @Restricted(NoExternalUse.class)
-    public String getApiToken() {
+    private String getApiToken() {
         StandardCredentials credentials = CredentialsMatchers.firstOrNull(
                 lookupCredentials(
                         StandardCredentials.class,
@@ -94,7 +119,14 @@ public class ArgoCDConfiguration extends AbstractDescribableImpl<ArgoCDConfigura
     }
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<ArgoCDConfiguration> {
+    public static class DescriptorImpl extends Descriptor<ArgoCDConnection> {
+
+        public FormValidation doCheckName(@QueryParameter String value) {
+            if (StringUtils.isEmpty(value)) {
+                return FormValidation.error("Name is required.");
+            }
+            return FormValidation.ok();
+        }
 
         public FormValidation doCheckUri(@QueryParameter String value) {
             if (StringUtils.isEmpty(value)) {
@@ -150,17 +182,17 @@ public class ArgoCDConfiguration extends AbstractDescribableImpl<ArgoCDConfigura
         }
 
         @RequirePOST
-        @Restricted(DoNotUse.class) // WebOnly
-        public FormValidation doTestConnection(@QueryParameter String uri,
+        @Restricted(DoNotUse.class)
+        public FormValidation doTestConnection(@QueryParameter String name,
+                                               @QueryParameter String uri,
                                                @QueryParameter String credentialsId,
                                                @QueryParameter boolean ignoreCertificateErrors) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             ArgoCDClient argoCDClient = null;
             try {
-                ArgoCDConfiguration configuration = new ArgoCDConfiguration(uri, credentialsId);
-                configuration.setIgnoreCertificateErrors(ignoreCertificateErrors);
-                argoCDClient = new ArgoCDClientImpl(uri, configuration.getApiToken(),
-                        ignoreCertificateErrors);
+                ArgoCDConnection connection = new ArgoCDConnection(name, uri, credentialsId);
+                connection.setIgnoreCertificateErrors(ignoreCertificateErrors);
+                argoCDClient = connection.getClient();
                 UserInfo userInfo = argoCDClient.getUserInfo();
                 if (userInfo.getLoggedIn()) {
                     return FormValidation.ok("Success, authenticated as " + userInfo.getUsername());
@@ -169,8 +201,8 @@ public class ArgoCDConfiguration extends AbstractDescribableImpl<ArgoCDConfigura
                 }
             } catch (ResponseException exception) {
                 return FormValidation.error(exception.getMessage());
-            } catch (GeneralSecurityException e) {
-                return FormValidation.error("Failed to create api client ssl context, message:" + e.getMessage());
+            } catch (AbortException e) {
+                return FormValidation.error("Failed to create an api client ssl context, message:" + e.getMessage());
             } finally {
                 if (argoCDClient != null) {
                     argoCDClient.close();
