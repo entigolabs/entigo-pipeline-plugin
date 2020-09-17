@@ -9,5 +9,7 @@ import io.jenkins.plugins.entigo.rest.ClientException;
  */
 public interface ArgoCDClientBuilder extends ExtensionPoint {
 
-    ArgoCDClient buildClient(String uri, String token, boolean ignoreCertificateErrors) throws ClientException;
+    ArgoCDClient buildSecuredClient(String uri, String token) throws ClientException;
+
+    ArgoCDClient buildUnsecuredClient(String uri, String token) throws ClientException;
 }

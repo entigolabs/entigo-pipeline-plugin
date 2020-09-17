@@ -18,7 +18,7 @@ public class PluginConfigurationTest {
     public RestartableJenkinsRule rr = new RestartableJenkinsRule();
 
     @Test
-    public void uiAndStorage_ArgoCDConnections() {
+    public void configure_ArgoCDConnections_ShouldSaveAndLoad() {
         rr.then(r -> {
             assertEquals(0, PluginConfiguration.get().getArgoCDConnections().size());
             // Adds an empty connection which will be populated through the UI
@@ -56,7 +56,7 @@ public class PluginConfigurationTest {
     }
 
     @Test
-    public void uiAndStorage_ArgoCDConnectionsMatcher() {
+    public void configure_argoCDConnectionsProperty_ShouldSaveAndLoad() {
         rr.then(r -> {
             assertEquals(0, PluginConfiguration.get().getArgoCDConnections().size());
             // Need a connection for selection
@@ -65,7 +65,7 @@ public class PluginConfigurationTest {
             // Adds an empty connection which will be populated through the UI
             ArgoCDConnectionsProperty newProperty = new ArgoCDConnectionsProperty(
                     Collections.singletonList(new ArgoCDConnectionMatcher(null, null)));
-            PluginConfiguration.get().setArgoCDConnectionsMatcher(newProperty);
+            PluginConfiguration.get().setArgoCDConnectionsProperty(newProperty);
             HtmlForm config = r.createWebClient().goTo("configure").getFormByName("config");
             HtmlTextInput nameTextBox = config.getInputByName("_.pattern");
             nameTextBox.setText("pattern");
@@ -73,7 +73,7 @@ public class PluginConfigurationTest {
             HtmlOption option = credentialsIdSelect.getOption(0);
             option.setValueAttribute("name");
             r.submit(config);
-            ArgoCDConnectionsProperty property = PluginConfiguration.get().getArgoCDConnectionsMatcher();
+            ArgoCDConnectionsProperty property = PluginConfiguration.get().getArgoCDConnectionsProperty();
             assertNotNull("must be saved", property);
             assertEquals(1, property.getMatchers().size());
             ArgoCDConnectionMatcher matcher = property.getMatchers().get(0);
@@ -81,7 +81,7 @@ public class PluginConfigurationTest {
             assertEquals("name", matcher.getConnectionName());
         });
         rr.then(r -> {
-            ArgoCDConnectionsProperty property = PluginConfiguration.get().getArgoCDConnectionsMatcher();
+            ArgoCDConnectionsProperty property = PluginConfiguration.get().getArgoCDConnectionsProperty();
             assertNotNull("must be present after restart", property);
             assertEquals(1, property.getMatchers().size());
             ArgoCDConnectionMatcher matcher = property.getMatchers().get(0);

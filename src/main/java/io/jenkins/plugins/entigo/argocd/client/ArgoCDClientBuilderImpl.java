@@ -11,7 +11,12 @@ import io.jenkins.plugins.entigo.rest.ClientException;
 public class ArgoCDClientBuilderImpl implements ArgoCDClientBuilder {
 
     @Override
-    public ArgoCDClient buildClient(String uri, String token, boolean ignoreCertificateErrors) throws ClientException {
-        return new ArgoCDClientImpl(uri, token, ignoreCertificateErrors);
+    public ArgoCDClient buildSecuredClient(String uri, String token) throws ClientException {
+        return new ArgoCDClientImpl(uri, token, false);
+    }
+
+    @Override
+    public ArgoCDClient buildUnsecuredClient(String uri, String token) throws ClientException {
+        return new ArgoCDClientImpl(uri, token, true);
     }
 }

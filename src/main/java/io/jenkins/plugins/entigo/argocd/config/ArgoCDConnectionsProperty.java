@@ -1,5 +1,6 @@
 package io.jenkins.plugins.entigo.argocd.config;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -39,7 +40,7 @@ public class ArgoCDConnectionsProperty extends JobProperty<Job<?, ?>> {
         ArgoCDConnectionsProperty property = job.getProperty(ArgoCDConnectionsProperty.class);
         if (property == null) {
             LOGGER.fine("No job specific ArgoCD connection property set, falling back to global config");
-            property = PluginConfiguration.get().getArgoCDConnectionsMatcher();
+            property = PluginConfiguration.get().getArgoCDConnectionsProperty();
             if (property == null) {
                 throw new AbortException("ArgoCD connection matcher was not set");
             }
@@ -78,6 +79,7 @@ public class ArgoCDConnectionsProperty extends JobProperty<Job<?, ?>> {
     public static class DescriptorImpl extends JobPropertyDescriptor {
 
         @Override
+        @NonNull
         public String getDisplayName() {
             return "ArgoCD Connections";
         }

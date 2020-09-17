@@ -23,14 +23,14 @@ public class PluginConfiguration extends GlobalConfiguration {
         return ExtensionList.lookupSingleton(PluginConfiguration.class);
     }
 
-    private ArgoCDConnectionsProperty argoCDConnectionsMatcher;
+    private ArgoCDConnectionsProperty argoCDConnectionsProperty;
     private List<ArgoCDConnection> argoCDConnections = new ArrayList<>();
-    private transient final Map<String, ArgoCDConnection> argoCDConnectionsMap = new HashMap<>();
+    private transient final Map<String, ArgoCDConnection> namedArgoCDConnections = new HashMap<>();
 
     public PluginConfiguration() {
         // When Jenkins is restarted, load any saved configuration from disk.
         load();
-        updateArgoCDConnectionsMap();
+        updateNamedArgoCDConnections();
     }
 
     public List<ArgoCDConnection> getArgoCDConnections() {
@@ -40,32 +40,32 @@ public class PluginConfiguration extends GlobalConfiguration {
     @DataBoundSetter
     public void setArgoCDConnections(List<ArgoCDConnection> argoCDConnections) {
         this.argoCDConnections = argoCDConnections;
-        updateArgoCDConnectionsMap();
+        updateNamedArgoCDConnections();
         save();
     }
 
-    public ArgoCDConnectionsProperty getArgoCDConnectionsMatcher() {
-        return argoCDConnectionsMatcher;
+    public ArgoCDConnectionsProperty getArgoCDConnectionsProperty() {
+        return argoCDConnectionsProperty;
     }
 
     @DataBoundSetter
-    public void setArgoCDConnectionsMatcher(ArgoCDConnectionsProperty argoCDConnectionsMatcher) {
-        this.argoCDConnectionsMatcher = argoCDConnectionsMatcher;
+    public void setArgoCDConnectionsProperty(ArgoCDConnectionsProperty argoCDConnectionsProperty) {
+        this.argoCDConnectionsProperty = argoCDConnectionsProperty;
         save();
     }
 
-    public Map<String, ArgoCDConnection> getArgoCDConnectionsMap() {
-        return argoCDConnectionsMap;
+    public Map<String, ArgoCDConnection> getNamedArgoCDConnections() {
+        return namedArgoCDConnections;
     }
 
     public ArgoCDConnection getArgoCDConnection(String connectionName) {
-        return argoCDConnectionsMap.get(connectionName);
+        return namedArgoCDConnections.get(connectionName);
     }
 
-    private void updateArgoCDConnectionsMap() {
-        argoCDConnectionsMap.clear();
+    private void updateNamedArgoCDConnections() {
+        namedArgoCDConnections.clear();
         for (ArgoCDConnection argoCDConnection : argoCDConnections) {
-            argoCDConnectionsMap.put(argoCDConnection.getName(), argoCDConnection);
+            namedArgoCDConnections.put(argoCDConnection.getName(), argoCDConnection);
         }
     }
 }

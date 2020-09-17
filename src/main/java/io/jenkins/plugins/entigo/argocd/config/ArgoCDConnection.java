@@ -90,8 +90,12 @@ public class ArgoCDConnection extends AbstractDescribableImpl<ArgoCDConnection> 
     public ArgoCDClient getClient() throws AbortException {
         if (client == null) {
             try {
-                client = ExtensionList.lookupSingleton(ArgoCDClientBuilder.class).buildClient(uri, getApiToken(),
-                        ignoreCertificateErrors);
+                ArgoCDClientBuilder builder = ExtensionList.lookupSingleton(ArgoCDClientBuilder.class);
+                if (ignoreCertificateErrors) {
+                    client = builder.buildUnsecuredClient(uri, getApiToken());
+                } else {
+                    client = builder.buildSecuredClient(uri, getApiToken());
+                }
             } catch (ClientException exception) {
                 throw new AbortException("Failed to create an ArgoCD client, message: " + exception.getMessage());
             }
@@ -178,7 +182,7 @@ public class ArgoCDConnection extends AbstractDescribableImpl<ArgoCDConnection> 
         }
 
         @RequirePOST
-        @Restricted(DoNotUse.class) // WebOnly
+        @Restricted(DoNotUse.class)
         public FormValidation doTestConnection(@QueryParameter String name,
                                                @QueryParameter String uri,
                                                @QueryParameter String credentialsId,
