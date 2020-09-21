@@ -26,7 +26,7 @@ pipeline {
   }
   post {
     always {
-        archiveArtifacts artifacts: 'target/plugin.hpi', onlyIfSuccessful: true
+        archiveArtifacts artifacts: 'target/entigo-pipeline.hpi', onlyIfSuccessful: true
         cleanWs()
     }
   }
