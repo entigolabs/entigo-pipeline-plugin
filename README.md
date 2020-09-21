@@ -6,6 +6,7 @@ Jenkins plugin for building CI/CD pipelines on top of Kubernetes and ArgoCD.
     * [Environmental variables](#argocd-environmental-variables)
     * [Job options](#argocd-job-options)
     * [Pipeline steps](#argocd-pipeline-steps)
+    * [Working example](#argocd-working-example)
 
 # Introduction
 
@@ -15,7 +16,9 @@ This plugin is still in active development and more functionality will be implem
 
 # ArgoCD Integration
 
-Before using any ArgoCD pipeline steps make sure that ArgoCD connections and matchers have been configured through the Jenkins System Configuration along with setting an ARGO_CD_SELECTOR variable in pipeline script.
+Before using any build steps
+* Configure the ArgoCD connections and their matchers in Configure System -> Entigo Pipeline
+* Set the env variable **ARGO_CD_SELECTOR** at the beginning of the pipeline script
 
 ## ArgoCD Configuration
 
@@ -31,13 +34,13 @@ Before using any ArgoCD pipeline steps make sure that ArgoCD connections and mat
     
 ## ArgoCD Environmental variables
 
-* ARGO_CD_SELECTOR - sets a value which is used to select a connection based on the configured connection matchers. For example: `env.GIT_BRANCH`
+* ARGO_CD_SELECTOR - **Required**, sets a value which is used to select a connection based on the configured connection matchers. For example: `env.GIT_BRANCH`
 
 ## ArgoCD Job options
 
 ### argoCDConnections
 
-Can be set through the Job UI or DSL. Overrides the global configuration of connection matchers. Parameters:
+**Optional**, overrides the global configuration of connection matchers. Can be set through the Job UI or DSL. Parameters:
 
 * List of connection matchers
     * Pattern - view Matching Pattern in ArgoCD configuration section
@@ -63,9 +66,30 @@ Sends application sync request to ArgoCD. Parameters:
 * async - Step won't wait for application sync to complete. Default false.
 * waitTimeout - Overrides Global configuration. View App wait timeout from ArgoCD configuration section.
 
-Example usage
+Minimal usage example
+
+```syncArgoApp 'application-name'```
+
+Full example
+
+```syncArgoApp async: false, name: 'application-name', waitTimeout: 600```
+
+## ArgoCD Working example
+
+Replace the connection-name value with the name of a pre-configured connection and application-name with the name of the ArgoCD application to synchronize.
 
 ```
-syncArgoApp 'application-name'
-syncArgoApp async: false, name: 'application-name', waitTimeout: 600
+pipeline {
+    agent any
+    environment {
+      ARGO_CD_SELECTOR = "connection-name"
+    }
+    stages {
+        stage('Entigo') {
+            steps {
+                syncArgoApp 'application-name'
+            }
+        }
+    }
+}
 ```
