@@ -19,7 +19,6 @@ pipeline {
     stage('Build Jenkins plugin') {
       steps {
         container('build') {
-          sh 'apk update'
           sh 'mvn install'
         }
       }
