@@ -17,6 +17,7 @@ This plugin is still in active development and more functionality will be implem
 # ArgoCD Integration
 
 Before using any build steps
+
 * Configure the ArgoCD connections and their matchers in Configure System -> Entigo Pipeline
 * Set the env variable **ARGO_CD_SELECTOR** at the beginning of the pipeline script
 
