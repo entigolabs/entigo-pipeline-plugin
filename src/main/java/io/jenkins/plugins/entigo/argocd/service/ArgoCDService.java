@@ -3,6 +3,7 @@ package io.jenkins.plugins.entigo.argocd.service;
 import hudson.AbortException;
 import io.jenkins.plugins.entigo.argocd.client.ArgoCDClient;
 import io.jenkins.plugins.entigo.argocd.model.*;
+import io.jenkins.plugins.entigo.rest.NotFoundException;
 import io.jenkins.plugins.entigo.rest.ResponseException;
 import org.glassfish.jersey.client.ChunkedInput;
 
@@ -18,6 +19,16 @@ public class ArgoCDService {
 
     public ArgoCDService(ArgoCDClient argoCDClient) {
         this.argoCDClient = argoCDClient;
+    }
+
+    public Application getApplication(String applicationName) throws AbortException {
+        try {
+            return argoCDClient.getApplication(applicationName);
+        } catch (NotFoundException exception) {
+            return null;
+        } catch (ResponseException exception) {
+            throw new AbortException("Failed to get ArgoCD application, error: " + exception.getMessage());
+        }
     }
 
     public void syncApplication(String applicationName) throws AbortException {

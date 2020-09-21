@@ -3,14 +3,8 @@ package io.jenkins.plugins.entigo.argocd.client;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.cli.NoCheckTrustManager;
-import io.jenkins.plugins.entigo.argocd.model.ApplicationSyncRequest;
-import io.jenkins.plugins.entigo.argocd.model.ApplicationWatchEvent;
-import io.jenkins.plugins.entigo.argocd.model.ErrorResponse;
-import io.jenkins.plugins.entigo.argocd.model.UserInfo;
-import io.jenkins.plugins.entigo.rest.ClientException;
-import io.jenkins.plugins.entigo.rest.JacksonConfiguration;
-import io.jenkins.plugins.entigo.rest.Oauth2AuthenticationFilter;
-import io.jenkins.plugins.entigo.rest.ResponseException;
+import io.jenkins.plugins.entigo.argocd.model.*;
+import io.jenkins.plugins.entigo.rest.*;
 import io.jenkins.plugins.entigo.util.ProcessingExceptionUtil;
 import org.apache.commons.lang.StringUtils;
 import org.glassfish.jersey.client.ChunkedInput;
@@ -85,9 +79,15 @@ public class ArgoCDClientImpl implements ArgoCDClient {
     }
 
     @Override
-    public void syncApplication(String applicationName, ApplicationSyncRequest request) {
+    public Application getApplication(String applicationName) {
+        return getRequest("applications/{name}", Application.class,
+                Collections.singletonMap("name", applicationName), null);
+    }
+
+    @Override
+    public Application syncApplication(String applicationName, ApplicationSyncRequest request) {
         // Have to use Void response type or else resteasy won't throw Not Found and Forbidden exceptions
-        postRequest("applications/{name}/sync", Void.class, request,
+        return postRequest("applications/{name}/sync", Application.class, request,
                 Collections.singletonMap("name", applicationName), null);
     }
 
@@ -136,6 +136,9 @@ public class ArgoCDClientImpl implements ArgoCDClient {
             if (response != null && response.hasEntity()) {
                 try {
                     ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
+                    if (errorResponse.getCode() == 5) {
+                        throw new NotFoundException("Artifact was not found");
+                    }
                     if (StringUtils.isNotEmpty(errorResponse.getError())) {
                         throw new ResponseException(errorResponse.getError());
                     }

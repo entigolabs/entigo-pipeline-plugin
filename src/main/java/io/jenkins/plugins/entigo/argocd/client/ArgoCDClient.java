@@ -1,6 +1,7 @@
 package io.jenkins.plugins.entigo.argocd.client;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.jenkins.plugins.entigo.argocd.model.Application;
 import io.jenkins.plugins.entigo.argocd.model.ApplicationSyncRequest;
 import io.jenkins.plugins.entigo.argocd.model.ApplicationWatchEvent;
 import io.jenkins.plugins.entigo.argocd.model.UserInfo;
@@ -12,9 +13,11 @@ import org.glassfish.jersey.client.ChunkedInput;
  */
 public interface ArgoCDClient {
 
-    void syncApplication(String applicationName, ApplicationSyncRequest request);
+    Application syncApplication(String applicationName, ApplicationSyncRequest request);
 
     UserInfo getUserInfo();
+
+    Application getApplication(String applicationName);
 
     // Annotation needed because of Spotbugs false positive https://github.com/spotbugs/spotbugs/pull/1248
     @NonNull
