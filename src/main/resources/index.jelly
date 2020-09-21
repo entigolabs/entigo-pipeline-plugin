@@ -1,4 +1,4 @@
 <?jelly escape-by-default='true'?>
 <div>
-    Custom plugin for Jenkins by Entigo.
+    Jenkins plugin for building CI/CD pipelines on top of Kubernetes and ArgoCD.
 </div>
