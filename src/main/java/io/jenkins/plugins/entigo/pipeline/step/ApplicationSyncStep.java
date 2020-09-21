@@ -64,6 +64,8 @@ public class ApplicationSyncStep extends Step {
 
     public static class ApplicationSyncStepExecution extends SynchronousStepExecution<Void> {
 
+        private static final long serialVersionUID = 1; // Required by spotbugs
+
         private final transient ApplicationSyncStep step;
 
         protected ApplicationSyncStepExecution(@Nonnull StepContext context, ApplicationSyncStep step) {
