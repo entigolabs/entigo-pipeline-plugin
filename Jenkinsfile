@@ -19,6 +19,7 @@ pipeline {
     stage('Build Jenkins plugin') {
       steps {
         container('build') {
+          sh 'mvn --version'
           sh 'mvn install'
         }
       }
