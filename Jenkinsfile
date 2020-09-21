@@ -20,7 +20,7 @@ pipeline {
       steps {
         container('build') {
           sh 'mvn --version'
-          sh 'mvn install'
+          sh 'mvn package'
         }
       }
     }
