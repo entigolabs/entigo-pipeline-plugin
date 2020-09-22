@@ -28,7 +28,7 @@ public class ApplicationSyncStep extends Step {
 
     private final String name;
     private Integer waitTimeout;
-    private Boolean async = false;
+    private boolean async = false;
 
     @DataBoundConstructor
     public ApplicationSyncStep(@CheckForNull String name) {

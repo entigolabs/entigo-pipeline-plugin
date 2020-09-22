@@ -44,13 +44,13 @@ public class ArgoCDClientImpl implements ArgoCDClient {
     private final Client restClient;
     private final WebTarget apiTarget;
 
-    public ArgoCDClientImpl(String argoUri, String authToken, boolean ignoreCertificateErrors) {
+    public ArgoCDClientImpl(String argoUri, String authToken, boolean ignoreCertificateErrors) throws ClientException {
         this.restClient = buildClient(ignoreCertificateErrors);
         this.apiTarget = restClient.target(UriBuilder.fromUri(argoUri).path(ARGOCD_API_PATH))
                 .register(new Oauth2AuthenticationFilter(authToken));
     }
 
-    private Client buildClient(boolean ignoreCertificateErrors) {
+    private Client buildClient(boolean ignoreCertificateErrors) throws ClientException {
         ClientBuilder clientBuilder = ClientBuilder.newBuilder()
                 .register(JacksonJsonProvider.class)
                 .register(JacksonConfiguration.class);
@@ -62,10 +62,10 @@ public class ArgoCDClientImpl implements ArgoCDClient {
         return clientBuilder.build();
     }
 
-    private void disableCertificateErrors(ClientBuilder clientBuilder) {
+    private void disableCertificateErrors(ClientBuilder clientBuilder) throws ClientException {
         try {
             TrustManager[] trustManager = new X509TrustManager[] { new NoCheckTrustManager() };
-            SSLContext sslcontext = SSLContext.getInstance("SSL");
+            SSLContext sslcontext = SSLContext.getInstance("TLSv1.2");
             sslcontext.init(null, trustManager, null);
             clientBuilder.sslContext(sslcontext)
                     .hostnameVerifier((s1, s2) -> true);
@@ -111,10 +111,6 @@ public class ArgoCDClientImpl implements ArgoCDClient {
                              Map<String, Object> queryParams) {
         return doRequest(HttpMethod.GET, path, responseType, null, uriParams, queryParams);
     }
-
-//    private <T> T postRequest(String path, Class<T> responseType, Object request) {
-//        return postRequest(path, responseType, request, Collections.emptyMap(), null);
-//    }
 
     private <T> T postRequest(String path, Class<T> responseType, Object request, Map<String, Object> uriParams,
                               Map<String, Object> queryParams) {

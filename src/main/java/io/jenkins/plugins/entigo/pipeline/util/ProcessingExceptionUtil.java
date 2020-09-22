@@ -8,6 +8,10 @@ import javax.ws.rs.ProcessingException;
  */
 public class ProcessingExceptionUtil {
 
+    private ProcessingExceptionUtil() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static String getExceptionMessage(ProcessingException exception) {
         Throwable cause = exception.getCause();
         if (cause != null) {

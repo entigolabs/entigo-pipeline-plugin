@@ -194,7 +194,7 @@ public class ArgoCDConnection extends AbstractDescribableImpl<ArgoCDConnection> 
                 connection.setIgnoreCertificateErrors(ignoreCertificateErrors);
                 argoCDClient = connection.getClient();
                 UserInfo userInfo = argoCDClient.getUserInfo();
-                if (userInfo.getLoggedIn()) {
+                if (Boolean.TRUE.equals(userInfo.getLoggedIn())) {
                     return FormValidation.ok("Success, authenticated as " + userInfo.getUsername());
                 } else {
                     return FormValidation.error("Successful request but user is not logged into ArgoCD");
