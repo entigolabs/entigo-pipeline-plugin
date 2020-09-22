@@ -20,6 +20,7 @@ pipeline {
       steps {
         container('build') {
           sh './mvnw install'
+          sh './mvnw verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar'
         }
       }
     }
