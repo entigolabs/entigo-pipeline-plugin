@@ -1,21 +1,21 @@
-package io.jenkins.plugins.entigo.argocd.model;
+package io.jenkins.plugins.entigo.pipeline.argocd.model;
 
 /**
  * Author: Märt Erlenheim
  * Date: 2020-09-16
  */
-public class JsonnetVar {
+public class HelmParameter {
 
-    private Boolean code;
+    private Boolean forceString;
     private String name;
     private String value;
 
-    public Boolean getCode() {
-        return code;
+    public Boolean getForceString() {
+        return forceString;
     }
 
-    public void setCode(Boolean code) {
-        this.code = code;
+    public void setForceString(Boolean forceString) {
+        this.forceString = forceString;
     }
 
     public String getName() {

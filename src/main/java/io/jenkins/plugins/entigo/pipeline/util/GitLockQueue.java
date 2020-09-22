@@ -1,4 +1,4 @@
-package io.jenkins.plugins.entigo.util;
+package io.jenkins.plugins.entigo.pipeline.util;
 
 import hudson.model.TaskListener;
 

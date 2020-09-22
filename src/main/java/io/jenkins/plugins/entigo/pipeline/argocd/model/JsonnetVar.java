@@ -1,13 +1,22 @@
-package io.jenkins.plugins.entigo.argocd.model;
+package io.jenkins.plugins.entigo.pipeline.argocd.model;
 
 /**
  * Author: Märt Erlenheim
  * Date: 2020-09-16
  */
-public class EnvEntry {
+public class JsonnetVar {
 
+    private Boolean code;
     private String name;
     private String value;
+
+    public Boolean getCode() {
+        return code;
+    }
+
+    public void setCode(Boolean code) {
+        this.code = code;
+    }
 
     public String getName() {
         return name;

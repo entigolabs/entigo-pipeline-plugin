@@ -1,15 +1,15 @@
-package io.jenkins.plugins.entigo.step;
+package io.jenkins.plugins.entigo.pipeline.step;
 
 import com.google.common.collect.ImmutableSet;
 import hudson.*;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
-import io.jenkins.plugins.entigo.argocd.client.ArgoCDClient;
-import io.jenkins.plugins.entigo.argocd.config.ArgoCDConnection;
-import io.jenkins.plugins.entigo.argocd.config.ArgoCDConnectionsProperty;
-import io.jenkins.plugins.entigo.argocd.model.Application;
-import io.jenkins.plugins.entigo.argocd.model.ApplicationSource;
+import io.jenkins.plugins.entigo.pipeline.argocd.client.ArgoCDClient;
+import io.jenkins.plugins.entigo.pipeline.argocd.config.ArgoCDConnection;
+import io.jenkins.plugins.entigo.pipeline.argocd.config.ArgoCDConnectionsProperty;
+import io.jenkins.plugins.entigo.pipeline.argocd.model.Application;
+import io.jenkins.plugins.entigo.pipeline.argocd.model.ApplicationSource;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.steps.*;
 import org.kohsuke.stapler.DataBoundConstructor;

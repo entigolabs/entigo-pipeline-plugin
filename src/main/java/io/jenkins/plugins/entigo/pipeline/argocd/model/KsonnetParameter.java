@@ -1,21 +1,21 @@
-package io.jenkins.plugins.entigo.argocd.model;
+package io.jenkins.plugins.entigo.pipeline.argocd.model;
 
 /**
  * Author: Märt Erlenheim
  * Date: 2020-09-16
  */
-public class HelmParameter {
+public class KsonnetParameter {
 
-    private Boolean forceString;
+    private String component;
     private String name;
     private String value;
 
-    public Boolean getForceString() {
-        return forceString;
+    public String getComponent() {
+        return component;
     }
 
-    public void setForceString(Boolean forceString) {
-        this.forceString = forceString;
+    public void setComponent(String component) {
+        this.component = component;
     }
 
     public String getName() {

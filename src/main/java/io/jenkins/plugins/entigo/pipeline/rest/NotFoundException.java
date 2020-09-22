@@ -1,4 +1,4 @@
-package io.jenkins.plugins.entigo.rest;
+package io.jenkins.plugins.entigo.pipeline.rest;
 
 /**
  * Author: Märt Erlenheim

@@ -1,4 +1,4 @@
-package io.jenkins.plugins.entigo.argocd.model;
+package io.jenkins.plugins.entigo.pipeline.argocd.model;
 
 /**
  * Author: Märt Erlenheim
