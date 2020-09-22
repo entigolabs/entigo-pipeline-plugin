@@ -43,7 +43,7 @@ public class ArgoCDService {
         try {
             task.get(timeout, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            // Stop execution
+            Thread.currentThread().interrupt();
         } catch (ExecutionException e) {
             throw new AbortException(e.getMessage());
         } catch (TimeoutException e) {
@@ -78,11 +78,8 @@ public class ArgoCDService {
             operationInProgress = true;
         } else if (application.getStatus().getOperationState() != null) {
             ApplicationStatus status = application.getStatus();
-            if (status.getOperationState().getFinishedAt() == null) {
-                // if it is not finished yet
-                operationInProgress = true;
-            } else if (status.getReconciledAt() == null ||
-                    status.getReconciledAt().isBefore(status.getOperationState().getFinishedAt())) {
+            if (status.getOperationState().getFinishedAt() == null || (status.getReconciledAt() == null ||
+                    status.getReconciledAt().isBefore(status.getOperationState().getFinishedAt()))) {
                 operationInProgress = true;
             }
         }

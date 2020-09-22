@@ -25,7 +25,7 @@ public class PluginConfiguration extends GlobalConfiguration {
 
     private ArgoCDConnectionsProperty argoCDConnectionsProperty;
     private List<ArgoCDConnection> argoCDConnections = new ArrayList<>();
-    private transient final Map<String, ArgoCDConnection> namedArgoCDConnections = new HashMap<>();
+    private final transient Map<String, ArgoCDConnection> namedArgoCDConnections = new HashMap<>();
 
     public PluginConfiguration() {
         // When Jenkins is restarted, load any saved configuration from disk.
