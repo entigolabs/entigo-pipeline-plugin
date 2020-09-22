@@ -15,6 +15,9 @@
         <jersey.version>2.31</jersey.version>
         <jackson.version>2.11.2</jackson.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <sonar.projectKey>entigolabs_entigo-pipeline-plugin</sonar.projectKey>
+        <sonar.organization>entigo</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
 
     <groupId>io.jenkins.plugins</groupId>
