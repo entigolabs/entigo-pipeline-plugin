@@ -1,6 +1,7 @@
 package io.jenkins.plugins.entigo.pipeline.util;
 
 import hudson.model.TaskListener;
+import io.jenkins.plugins.entigo.pipeline.model.GitBranch;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,12 +15,12 @@ import java.util.concurrent.locks.ReentrantLock;
  * Author: Märt Erlenheim
  * Date: 2020-09-14
  */
-// TODO What should be the key object type?
 public class GitLockQueue {
 
-    private static Map<Object, Lock> itemQueue = Collections.synchronizedMap(new HashMap<>());
+    private static Map<GitBranch, Lock> itemQueue = Collections.synchronizedMap(new HashMap<>());
 
-    public static void executeInQueue(Object key, TaskListener taskListener, Callable<Void> callable) throws Exception {
+    public static void executeInQueue(GitBranch key, TaskListener taskListener, Callable<Void> callable)
+            throws Exception {
         Lock lock = itemQueue.computeIfAbsent(key, l -> new ReentrantLock(true));
         taskListener.getLogger().println("Getting lock for repo: " + key);
         lock.lock();

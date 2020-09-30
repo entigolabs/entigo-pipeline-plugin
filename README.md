@@ -77,16 +77,18 @@ Full example
 
 ## ArgoCD Working example
 
-Replace the connection-name value with the name of a pre-configured connection and application-name with the name of the ArgoCD application to synchronize.
+Replace the connection-matcher with a value that matches one of the pre-configured connection matchers, e.g set both to "dev".
+
+Replace the application-name with the name of the ArgoCD application to synchronize.
 
 ```
 pipeline {
     agent any
     environment {
-      ARGO_CD_SELECTOR = "connection-name"
+      ARGO_CD_SELECTOR = "connection-matcher"
     }
     stages {
-        stage('Entigo') {
+        stage('ArgoCD sync') {
             steps {
                 syncArgoApp 'application-name'
             }
