@@ -1,3 +1,5 @@
+# Entigo Pipeline Plugin
+
 Jenkins plugin for building CI/CD pipelines on top of Kubernetes and ArgoCD.
 
 * [Introduction](#introduction)
@@ -8,20 +10,20 @@ Jenkins plugin for building CI/CD pipelines on top of Kubernetes and ArgoCD.
     * [Pipeline steps](#argocd-pipeline-steps)
     * [Working example](#argocd-working-example)
 
-# Introduction
+## Introduction
 
 The goal of this project is to provide easy to use tools for setting up a software pipeline. Functionality will be based on the CI/CD pipeline best practises developed by Entigo which describe how to build the software, run it through analysis, tests and environments, and deploy the results to production.
 
 This plugin is still in active development and more functionality will be implemented soon.
 
-# ArgoCD Integration
+## ArgoCD Integration
 
 Before using any build steps
 
 * Configure the ArgoCD connections and their matchers in Configure System -> Entigo Pipeline
 * Set the env variable **ARGO_CD_SELECTOR** at the beginning of the pipeline script
 
-## ArgoCD Configuration
+### ArgoCD Configuration
 
 * Connections
     * Connection name - unique name for a connection which is used when selecting a connection during a build.
@@ -33,13 +35,13 @@ Before using any build steps
     * Matching Pattern - pattern is based on Java regex and will be matched against ARGO_CD_SELECTOR env variable.
     * Connection name - name of the connection to use when pattern matches. Connections have to be saved first to populate the selection list.
     
-## ArgoCD Environmental variables
+### ArgoCD Environmental variables
 
 * ARGO_CD_SELECTOR - **Required**, sets a value which is used to select a connection based on the configured connection matchers. For example: `env.GIT_BRANCH`
 
-## ArgoCD Job options
+### ArgoCD Job options
 
-### argoCDConnections
+#### argoCDConnections
 
 **Optional**, overrides the global configuration of connection matchers. Can be set through the Job UI or DSL. Parameters:
 
@@ -57,9 +59,9 @@ options {
 }
 ```
 
-## ArgoCD Pipeline steps
+### ArgoCD Pipeline steps
 
-### syncArgoApp
+#### syncArgoApp
 
 Sends application sync request to ArgoCD. Parameters:
 
@@ -75,7 +77,7 @@ Full example
 
 ```syncArgoApp async: false, name: 'application-name', waitTimeout: 600```
 
-## ArgoCD Working example
+### ArgoCD Working example
 
 Replace the connection-matcher with a value that matches one of the pre-configured connection matchers, e.g set both to "dev".
 

@@ -1,6 +1,7 @@
 package io.jenkins.plugins.entigo.pipeline.argocd.service;
 
 import hudson.AbortException;
+import hudson.model.TaskListener;
 import io.jenkins.plugins.entigo.pipeline.argocd.client.ArgoCDClient;
 import io.jenkins.plugins.entigo.pipeline.argocd.model.*;
 import io.jenkins.plugins.entigo.pipeline.rest.NotFoundException;
@@ -22,8 +23,12 @@ public class ArgoCDService {
     }
 
     public Application getApplication(String applicationName) throws AbortException {
+        return getApplication(applicationName, null);
+    }
+
+    public Application getApplication(String applicationName, String projectName) throws AbortException {
         try {
-            return argoCDClient.getApplication(applicationName);
+            return argoCDClient.getApplication(applicationName, projectName);
         } catch (NotFoundException exception) {
             return null;
         } catch (ResponseException exception) {
@@ -31,7 +36,24 @@ public class ArgoCDService {
         }
     }
 
-    public void syncApplication(String applicationName) throws AbortException {
+    public Application postApplication(Application application) throws AbortException {
+        try {
+            return argoCDClient.postApplication(application);
+        } catch (ResponseException exception) {
+            throw new AbortException("Failed to post the ArgoCD application, error: " + exception.getMessage());
+        }
+    }
+
+    public void syncApplicationWithWait(TaskListener listener, String applicationName, Long timeout)
+            throws AbortException {
+        syncApplication(listener, applicationName);
+        listener.getLogger().println("Waiting for application to sync, timeout is " + timeout + " seconds");
+        waitApplicationStatus(applicationName, timeout);
+        listener.getLogger().println("Application is synced and healthy");
+    }
+
+    public void syncApplication(TaskListener listener, String applicationName) throws AbortException {
+        listener.getLogger().println("Syncing ArgoCD application...");
         SyncStrategy syncStrategy = new SyncStrategy();
         syncStrategy.setApply(new SyncStrategyApply(true));
         ApplicationSyncRequest syncRequest = new ApplicationSyncRequest();

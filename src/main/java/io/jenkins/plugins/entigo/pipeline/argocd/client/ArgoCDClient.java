@@ -17,11 +17,13 @@ public interface ArgoCDClient {
 
     UserInfo getUserInfo();
 
-    Application getApplication(String applicationName);
+    Application getApplication(String applicationName, String projectName);
 
     // Annotation needed because of Spotbugs false positive https://github.com/spotbugs/spotbugs/pull/1248
     @NonNull
     ChunkedInput<ApplicationWatchEvent> watchApplication(String applicationName);
+
+    Application postApplication(Application application);
 
     void close();
 }

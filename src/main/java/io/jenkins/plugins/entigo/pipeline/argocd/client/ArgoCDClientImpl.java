@@ -79,9 +79,15 @@ public class ArgoCDClientImpl implements ArgoCDClient {
     }
 
     @Override
-    public Application getApplication(String applicationName) {
+    public Application getApplication(String applicationName, String projectName) {
+        Map<String, Object> queryParams = projectName == null ? null : Collections.singletonMap("project", projectName);
         return getRequest("applications/{name}", Application.class,
-                Collections.singletonMap("name", applicationName), null);
+                Collections.singletonMap("name", applicationName), queryParams);
+    }
+
+    @Override
+    public Application postApplication(Application application) {
+        return postRequest("applications", Application.class, application);
     }
 
     @Override
@@ -109,6 +115,10 @@ public class ArgoCDClientImpl implements ArgoCDClient {
     private <T> T getRequest(String path, Class<T> responseType, Map<String, Object> uriParams,
                              Map<String, Object> queryParams) {
         return doRequest(HttpMethod.GET, path, responseType, null, uriParams, queryParams);
+    }
+
+    private <T> T postRequest(String path, Class<T> responseType, Object request) {
+        return postRequest(path, responseType, request, Collections.emptyMap(), null);
     }
 
     private <T> T postRequest(String path, Class<T> responseType, Object request, Map<String, Object> uriParams,

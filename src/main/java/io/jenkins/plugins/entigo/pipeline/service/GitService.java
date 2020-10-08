@@ -20,6 +20,7 @@ import org.jenkinsci.plugins.gitclient.GitClient;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,24 +36,30 @@ public class GitService {
     private static final String GIT_HEAD_REFERENCE = "refs/heads/";
 
     private final GitClient git;
-    private GitBranch gitBranch;
+    private final GitBranch gitBranch;
 
     public GitService(TaskListener listener, EnvVars envVars, FilePath localRepoPath, String credentialsId,
                       String repoUrl, String targetRevision)
             throws IOException, InterruptedException {
-        GitTool tool = findGitTool(getWorkspaceNode(localRepoPath), envVars, listener);
-        String gitExe = tool == null ? null : tool.getGitExe();
-        this.git = Git.with(listener, envVars)
-                .using(gitExe) // Null exe will default to Jgit
-                .in(localRepoPath)
-                .getClient();
-        git.setAuthor(GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL);
+        this.git = createClient(listener, envVars, localRepoPath);
         if (credentialsId != null) {
             addGitCredentials(credentialsId);
         } else {
             listener.getLogger().println("[WARNING] No git credentials have been set in the global config");
         }
-        setGitBranch(repoUrl, targetRevision);
+        this.gitBranch = getGitBranch(repoUrl, targetRevision);
+    }
+
+    private GitClient createClient(TaskListener listener, EnvVars envVars, FilePath localRepoPath)
+            throws IOException, InterruptedException {
+        GitTool tool = findGitTool(getWorkspaceNode(localRepoPath), envVars, listener);
+        String gitExe = tool == null ? null : tool.getGitExe();
+        GitClient git = Git.with(listener, envVars)
+                .using(gitExe) // Null exe will default to Jgit
+                .in(localRepoPath)
+                .getClient();
+        git.setAuthor(GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL);
+        return git;
     }
 
     private void addGitCredentials(String credentialsId) throws AbortException {
@@ -61,12 +68,12 @@ public class GitService {
         git.addDefaultCredentials(credentials);
     }
 
-    private void setGitBranch(String repoUrl, String targetRevision) throws AbortException, InterruptedException {
+    private GitBranch getGitBranch(String repoUrl, String targetRevision) throws AbortException, InterruptedException {
         String branchName = targetRevision;
         if (GIT_HEAD.equals(targetRevision)) {
             branchName = getHeadBranchName(repoUrl);
         }
-        this.gitBranch = new GitBranch(repoUrl, branchName);
+        return new GitBranch(repoUrl, branchName);
     }
 
     public GitBranch getGitBranch() {
@@ -77,13 +84,15 @@ public class GitService {
         // Using a refspec causes git to fetch only the branch we need
         git.clone_().url(gitBranch.getUrl()).refspecs(Collections.singletonList(refSpec()))
                 .repositoryName(GIT_REMOTE_NAME).shallow(true).execute();
-        git.checkout().branch(gitBranch.getName()).ref(GIT_REMOTE_NAME + "/" + gitBranch.getName()).execute();
+        git.checkout().branch(gitBranch.getName()).ref(GIT_REMOTE_NAME + "/" + gitBranch.getName())
+                .deleteBranchIfExist(true).execute();
     }
 
-    public void push(String commitMessage) throws InterruptedException, URISyntaxException {
+    public void push(String commitMessage, List<String> filePatterns) throws InterruptedException, URISyntaxException {
         if (git.hasGitRepo()) {
-            // TODO What files to add?
-            git.add(".");
+            for (String filePattern : filePatterns) {
+                git.add(filePattern);
+            }
             git.commit(commitMessage);
             git.push().to(new URIish(gitBranch.getUrl())).ref(gitBranch.getName()).execute();
         } else {

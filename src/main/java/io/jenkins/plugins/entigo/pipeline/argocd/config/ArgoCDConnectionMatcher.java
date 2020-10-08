@@ -3,9 +3,12 @@ package io.jenkins.plugins.entigo.pipeline.argocd.config;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.plugins.entigo.pipeline.PluginConfiguration;
+import io.jenkins.plugins.entigo.pipeline.util.FormValidationUtil;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import java.util.List;
 
@@ -34,6 +37,14 @@ public class ArgoCDConnectionMatcher extends AbstractDescribableImpl<ArgoCDConne
 
     @Extension
     public static class DescriptorImpl extends Descriptor<ArgoCDConnectionMatcher> {
+
+        public FormValidation doCheckPattern(@QueryParameter String value) {
+            return FormValidationUtil.doCheckRequiredField(value, "Pattern is required");
+        }
+
+        public FormValidation doCheckConnectionName(@QueryParameter String value) {
+            return FormValidationUtil.doCheckRequiredField(value, "Connection name is required");
+        }
 
         public ListBoxModel doFillConnectionNameItems() {
             ListBoxModel options = new ListBoxModel();

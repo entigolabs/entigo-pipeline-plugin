@@ -1,7 +1,6 @@
 package io.jenkins.plugins.entigo.pipeline.step;
 
 import com.google.common.collect.ImmutableSet;
-import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.Run;
@@ -10,7 +9,7 @@ import hudson.util.FormValidation;
 import io.jenkins.plugins.entigo.pipeline.argocd.config.ArgoCDConnection;
 import io.jenkins.plugins.entigo.pipeline.argocd.config.ArgoCDConnectionsProperty;
 import io.jenkins.plugins.entigo.pipeline.argocd.service.ArgoCDService;
-import org.apache.commons.lang.StringUtils;
+import io.jenkins.plugins.entigo.pipeline.util.FormValidationUtil;
 import org.jenkinsci.plugins.workflow.steps.*;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -76,25 +75,16 @@ public class ApplicationSyncStep extends Step {
         @Override
         protected Void run() throws Exception {
             TaskListener listener = getContext().get(TaskListener.class);
-            listener.getLogger().println("Syncing ArgoCD application...");
             ArgoCDConnection connection = ArgoCDConnectionsProperty.getConnection(getContext().get(Run.class),
                     getContext().get(EnvVars.class));
             ArgoCDService argoCDService = new ArgoCDService(connection.getClient());
-            argoCDService.syncApplication(step.name);
             if (step.async) {
-                listener.getLogger().println("Async mode enabled, skip waiting for application to sync");
+                argoCDService.syncApplication(listener, step.name);
             } else {
-                waitApplicationSync(listener, connection, argoCDService);
+                Long timeout = step.waitTimeout == null ? connection.getAppWaitTimeout() : Long.valueOf(step.waitTimeout);
+                argoCDService.syncApplicationWithWait(listener, step.name, timeout);
             }
             return null;
-        }
-
-        private void waitApplicationSync(TaskListener listener, ArgoCDConnection connection,
-                                         ArgoCDService argoCDService) throws AbortException {
-            Long timeout = step.waitTimeout == null ? connection.getAppWaitTimeout() : Long.valueOf(step.waitTimeout);
-            listener.getLogger().println("Waiting for application to sync, timeout is " + timeout + " seconds");
-            argoCDService.waitApplicationStatus(step.name, timeout);
-            listener.getLogger().println("Application is synced and healthy");
         }
 
     }
@@ -118,25 +108,11 @@ public class ApplicationSyncStep extends Step {
         }
 
         public FormValidation doCheckName(@QueryParameter String value) {
-            if (StringUtils.isEmpty(value)) {
-                return FormValidation.error("Application name is required");
-            }
-            return FormValidation.ok();
+            return FormValidationUtil.doCheckRequiredField(value, "Application name is required");
         }
 
         public FormValidation doCheckWaitTimeout(@QueryParameter String value) {
-            if (StringUtils.isEmpty(value)) {
-                return FormValidation.ok();
-            }
-            try {
-                long timeout = Long.parseLong(value);
-                if (timeout < 1L || timeout > 1800L) {
-                    return FormValidation.error("Timeout must be between 1 and 1800");
-                }
-            } catch (NumberFormatException exception) {
-                return FormValidation.error("Must be a positive number");
-            }
-            return FormValidation.ok();
+            return FormValidationUtil.doCheckTimeout(value, 1L, 1800L, false);
         }
     }
 }

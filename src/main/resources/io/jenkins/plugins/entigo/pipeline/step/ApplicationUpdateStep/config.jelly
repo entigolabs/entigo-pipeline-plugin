@@ -5,8 +5,18 @@
         <f:entry field="applicationName" title="${%ArgoCD application name}">
             <f:textbox/>
         </f:entry>
-        <f:entry field="autoDeploy" title="${%Deploy the app if not found}">
-            <f:checkbox />
+        <f:entry field="projectName" title="${%ArgoCD project name}">
+            <f:textbox/>
         </f:entry>
+        <f:entry field="imageName" title="${%Image name}">
+            <f:textbox/>
+        </f:entry>
+        <f:entry field="imageVersion" title="${%Image version}">
+            <f:textbox/>
+        </f:entry>
+        <f:entry field="autoDeploy" title="Deploy app if not exists">
+            <f:checkbox/>
+        </f:entry>
+        <f:optionalProperty field="deploymentArgs" title="Deployment arguments"/>
     </f:block>
 </j:jelly>
