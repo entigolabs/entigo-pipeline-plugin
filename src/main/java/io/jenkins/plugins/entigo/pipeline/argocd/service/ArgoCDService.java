@@ -16,6 +16,9 @@ import java.util.concurrent.*;
  */
 public class ArgoCDService {
 
+    private static final int INITIAL_RETRY_DELAY = 1;
+    private static final int MAX_RETRY_DELAY = 30;
+
     private final ArgoCDClient argoCDClient;
     private TaskListener listener = null;
 
@@ -61,19 +64,28 @@ public class ArgoCDService {
         }
     }
 
-    private void watchApplicationEvents(String applicationName) throws AbortException {
-        try (ChunkedInput<ApplicationWatchEvent> input = argoCDClient.watchApplication(applicationName)) {
-            ApplicationWatchEvent event;
-            while ((event = input.read()) != null) {
-                if (isApplicationReady(event.getResult().getApplication())) {
-                    return;
+    private void watchApplicationEvents(String applicationName) throws InterruptedException {
+        long retryDelay = INITIAL_RETRY_DELAY;
+        while (true) {
+            try (ChunkedInput<ApplicationWatchEvent> input = argoCDClient.watchApplication(applicationName)) {
+                ApplicationWatchEvent event;
+                while ((event = input.read()) != null) {
+                    retryDelay = INITIAL_RETRY_DELAY;
+                    if (isApplicationReady(event.getResult().getApplication())) {
+                        return;
+                    }
                 }
+                // When event is null
+                ListenerUtil.println(listener, String.format("Connection was interrupted, retrying in %d seconds",
+                        retryDelay));
+            } catch (ResponseException exception) {
+                ListenerUtil.println(listener, String.format("Request failed, retrying in %d seconds," +
+                        " exception message: %s", retryDelay, exception.getMessage()));
             }
-            // When event is null
-            throw new AbortException("Failed to get an application event, either ArgoCD didn't send a response " +
-                    "or response parsing failed");
-        } catch (ResponseException exception) {
-            throw new AbortException("Watching application events has failed, error: " + exception.getMessage());
+            Thread.sleep(retryDelay * 1000L);
+            if (retryDelay < MAX_RETRY_DELAY) {
+                retryDelay = Math.min(MAX_RETRY_DELAY, retryDelay * 2);
+            }
         }
     }
 
@@ -94,7 +106,7 @@ public class ArgoCDService {
         String healthStatus = application.getStatus().getHealth().getStatus();
         String syncStatus = application.getStatus().getSync().getStatus();
         ListenerUtil.println(listener, String.format("Operation finished, sync status: %s, health status: %s",
-                healthStatus, syncStatus));
+                syncStatus, healthStatus));
         return Health.HEALTHY.getStatus().equals(healthStatus) && Sync.SYNCED.getStatus().equals(syncStatus);
     }
 }
