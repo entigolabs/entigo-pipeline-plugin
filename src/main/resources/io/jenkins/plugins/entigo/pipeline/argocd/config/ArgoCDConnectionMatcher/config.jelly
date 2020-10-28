@@ -6,7 +6,7 @@
             <f:textbox/>
         </f:entry>
         <f:entry field="connectionName" title="${%Connection name}">
-            <f:select/>
+            <f:select clazz="connection-select"/>
         </f:entry>
     </f:block>
 </j:jelly>

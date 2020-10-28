@@ -197,9 +197,9 @@ public class ArgoCDConnection extends AbstractDescribableImpl<ArgoCDConnection> 
                 if (Boolean.TRUE.equals(userInfo.getLoggedIn())) {
                     return FormValidation.ok("Success, authenticated as " + userInfo.getUsername());
                 } else {
-                    return FormValidation.error("Successful request but user is not logged into ArgoCD");
+                    return FormValidation.error("Couldn't log user into ArgoCD, authentication token might be wrong");
                 }
-            } catch (ResponseException exception) {
+            } catch (ResponseException | IllegalStateException exception) {
                 return FormValidation.error(exception.getMessage());
             } catch (AbortException e) {
                 return FormValidation.error("Failed to create an api client ssl context, message:" + e.getMessage());

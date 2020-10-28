@@ -26,7 +26,7 @@ Before using any build steps
 * Connections
     * Connection name - unique name for a connection which is used when selecting a connection during a build.
     * Host uri - has to include http or https scheme and not include the api path.
-    * Credentials - Jenkins Credential with Secret type and with a value of ArgoCD user authentication token.
+    * Credentials - Jenkins Credential with Secret text type and with a value of ArgoCD user authentication token.
     * Ignore ArgoCD SSL Certificate Errors disables all SSL errors and enables insecure connections.
     * App wait timeout - in seconds for how long ArgoCD commands will wait for application actions, fails the build if timeout is exceeded.
 * Connection matchers
@@ -64,7 +64,7 @@ options {
 Sends application sync request to ArgoCD. Parameters:
 
 * name - ArgoCD application name, required.
-* async - Step won't wait for application sync to complete. Default false.
+* wait - Wait for application sync to complete. Default true.
 * waitTimeout - Overrides Global configuration. View App wait timeout from ArgoCD configuration section.
 
 Minimal usage example
@@ -73,7 +73,7 @@ Minimal usage example
 
 Full example
 
-```syncArgoApp async: false, name: 'application-name', waitTimeout: 600```
+```syncArgoApp wait: true, name: 'application-name', waitTimeout: 600```
 
 ## ArgoCD Working example
 

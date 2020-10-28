@@ -123,7 +123,7 @@ public class ArgoCDClientImpl implements ArgoCDClient {
             WebTarget target = apiTarget.path(path).resolveTemplates(uriParams);
             if (queryParams != null) {
                 for (Map.Entry<String, Object> queryParam : queryParams.entrySet()) {
-                    target.queryParam(queryParam.getKey(), queryParam.getValue());
+                    target = target.queryParam(queryParam.getKey(), queryParam.getValue());
                 }
             }
             return target.request(MediaType.APPLICATION_JSON).method(method, Entity.json(request), responseType);

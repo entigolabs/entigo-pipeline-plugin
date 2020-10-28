@@ -25,20 +25,26 @@ public class PluginConfigurationTest {
             PluginConfiguration.get().setArgoCDConnections(Collections.singletonList(
                     new ArgoCDConnection(null, null, null)));
             HtmlForm config = r.createWebClient().goTo("configure").getFormByName("config");
+            HtmlSelect defaultArgoCDConnectionSelect = config.getSelectByName("_.defaultArgoCDConnection");
+            HtmlOption connectionOption = defaultArgoCDConnectionSelect.getOption(0);
+            connectionOption.setValueAttribute("localConnection");
+            defaultArgoCDConnectionSelect.setSelectedAttribute(connectionOption, true);
             HtmlTextInput nameTextBox = config.getInputByName("_.name");
             nameTextBox.setText("localhost");
             HtmlTextInput uriTextBox = config.getInputByName("_.uri");
             uriTextBox.setText("https://localhost");
             HtmlSelect credentialsIdSelect = config.getSelectByName("_.credentialsId");
-            HtmlOption option = credentialsIdSelect.getOption(0);
-            option.setValueAttribute("argoCD");
-            credentialsIdSelect.setSelectedAttribute(option, true);
+            HtmlOption credentialOption = credentialsIdSelect.getOption(0);
+            credentialOption.setValueAttribute("argoCD");
+            credentialsIdSelect.setSelectedAttribute(credentialOption, true);
             HtmlCheckBoxInput ignoreSSL = config.getInputByName("_.ignoreCertificateErrors");
             ignoreSSL.setChecked(true);
             HtmlNumberInput timeoutInput = config.getInputByName("_.appWaitTimeout");
             timeoutInput.setText("500");
             r.submit(config);
-            ArgoCDConnection argoCDConnection = PluginConfiguration.get().getArgoCDConnection("localhost");
+            PluginConfiguration configuration = PluginConfiguration.get();
+            assertEquals("localConnection", configuration.getDefaultArgoCDConnection());
+            ArgoCDConnection argoCDConnection = configuration.getArgoCDConnection("localhost");
             assertNotNull("must be saved", argoCDConnection);
             assertEquals("https://localhost", argoCDConnection.getUri());
             assertEquals("argoCD", argoCDConnection.getCredentialsId());
@@ -46,7 +52,9 @@ public class PluginConfigurationTest {
             assertTrue(argoCDConnection.isIgnoreCertificateErrors());
         });
         rr.then(r -> {
-            ArgoCDConnection argoCDConnection = PluginConfiguration.get().getArgoCDConnection("localhost");
+            PluginConfiguration configuration = PluginConfiguration.get();
+            assertEquals("localConnection", configuration.getDefaultArgoCDConnection());
+            ArgoCDConnection argoCDConnection = configuration.getArgoCDConnection("localhost");
             assertNotNull("must be present after restart", argoCDConnection);
             assertEquals("https://localhost", argoCDConnection.getUri());
             assertEquals("argoCD", argoCDConnection.getCredentialsId());

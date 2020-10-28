@@ -1,9 +1,11 @@
 package io.jenkins.plugins.entigo.pipeline.argocd.service;
 
 import hudson.AbortException;
+import hudson.model.TaskListener;
 import io.jenkins.plugins.entigo.pipeline.argocd.client.ArgoCDClient;
 import io.jenkins.plugins.entigo.pipeline.argocd.model.*;
 import io.jenkins.plugins.entigo.pipeline.rest.ResponseException;
+import io.jenkins.plugins.entigo.pipeline.util.ListenerUtil;
 import org.glassfish.jersey.client.ChunkedInput;
 
 import java.util.concurrent.*;
@@ -15,9 +17,14 @@ import java.util.concurrent.*;
 public class ArgoCDService {
 
     private final ArgoCDClient argoCDClient;
+    private TaskListener listener = null;
 
     public ArgoCDService(ArgoCDClient argoCDClient) {
         this.argoCDClient = argoCDClient;
+    }
+
+    public void setListener(TaskListener listener) {
+        this.listener = listener;
     }
 
     public void syncApplication(String applicationName) throws AbortException {
@@ -44,6 +51,7 @@ public class ArgoCDService {
             task.get(timeout, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            throw new AbortException("Step was interrupted");
         } catch (ExecutionException e) {
             throw new AbortException(e.getMessage());
         } catch (TimeoutException e) {
@@ -71,24 +79,22 @@ public class ArgoCDService {
 
     // Logic imported from the official ArgoCD CLI wait command src app.go method waitOnApplicationStatus
     private boolean isApplicationReady(Application application) {
-        boolean operationInProgress = false;
-        // consider the operation is in progress
         if (application.getOperation() != null) {
-            // if it just got requested
-            operationInProgress = true;
+            return false;
         } else if (application.getStatus().getOperationState() != null) {
             ApplicationStatus status = application.getStatus();
             if (status.getOperationState().getFinishedAt() == null || (status.getReconciledAt() == null ||
                     status.getReconciledAt().isBefore(status.getOperationState().getFinishedAt()))) {
-                operationInProgress = true;
+                ListenerUtil.println(listener, "Operation is in progress, phase: " +
+                        application.getStatus().getOperationState().getPhase());
+                return false;
             }
         }
 
-        if (operationInProgress) {
-            return false;
-        }
-
-        return Health.HEALTHY.getStatus().equals(application.getStatus().getHealth().getStatus()) &&
-                Sync.SYNCED.getStatus().equals(application.getStatus().getSync().getStatus());
+        String healthStatus = application.getStatus().getHealth().getStatus();
+        String syncStatus = application.getStatus().getSync().getStatus();
+        ListenerUtil.println(listener, String.format("Operation finished, sync status: %s, health status: %s",
+                healthStatus, syncStatus));
+        return Health.HEALTHY.getStatus().equals(healthStatus) && Sync.SYNCED.getStatus().equals(syncStatus);
     }
 }
