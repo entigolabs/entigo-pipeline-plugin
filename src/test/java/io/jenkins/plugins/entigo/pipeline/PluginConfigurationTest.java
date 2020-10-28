@@ -68,8 +68,9 @@ public class PluginConfigurationTest {
         rr.then(r -> {
             assertEquals(0, PluginConfiguration.get().getArgoCDConnections().size());
             // Need a connection for selection
-            PluginConfiguration.get().setArgoCDConnections(Collections.singletonList(
-                    new ArgoCDConnection("connection", null, null)));
+            ArgoCDConnection connection = new ArgoCDConnection("connection", null, null);
+            connection.setGenerateMatcher(false);
+            PluginConfiguration.get().setArgoCDConnections(Collections.singletonList(connection));
             // Adds an empty connection which will be populated through the UI
             ArgoCDConnectionsProperty newProperty = new ArgoCDConnectionsProperty(
                     Collections.singleton(new ArgoCDConnectionMatcher(null, null)));
