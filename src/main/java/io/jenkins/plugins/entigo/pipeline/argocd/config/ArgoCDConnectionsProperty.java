@@ -12,7 +12,7 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -24,14 +24,14 @@ public class ArgoCDConnectionsProperty extends JobProperty<Job<?, ?>> {
     private static final Logger LOGGER = Logger.getLogger(ArgoCDConnectionsProperty.class.getName());
     private static final String SELECTOR_ENV_VAR = "ARGO_CD_SELECTOR";
 
-    private final List<ArgoCDConnectionMatcher> matchers;
+    private final Set<ArgoCDConnectionMatcher> matchers;
 
     @DataBoundConstructor
-    public ArgoCDConnectionsProperty(List<ArgoCDConnectionMatcher> matchers) {
+    public ArgoCDConnectionsProperty(Set<ArgoCDConnectionMatcher> matchers) {
         this.matchers = matchers;
     }
 
-    public List<ArgoCDConnectionMatcher> getMatchers() {
+    public Set<ArgoCDConnectionMatcher> getMatchers() {
         return matchers;
     }
 

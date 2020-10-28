@@ -72,7 +72,7 @@ public class PluginConfigurationTest {
                     new ArgoCDConnection("connection", null, null)));
             // Adds an empty connection which will be populated through the UI
             ArgoCDConnectionsProperty newProperty = new ArgoCDConnectionsProperty(
-                    Collections.singletonList(new ArgoCDConnectionMatcher(null, null)));
+                    Collections.singleton(new ArgoCDConnectionMatcher(null, null)));
             PluginConfiguration.get().setArgoCDConnectionsProperty(newProperty);
             HtmlForm config = r.createWebClient().goTo("configure").getFormByName("config");
             HtmlTextInput nameTextBox = config.getInputByName("_.pattern");
@@ -84,7 +84,7 @@ public class PluginConfigurationTest {
             ArgoCDConnectionsProperty property = PluginConfiguration.get().getArgoCDConnectionsProperty();
             assertNotNull("must be saved", property);
             assertEquals(1, property.getMatchers().size());
-            ArgoCDConnectionMatcher matcher = property.getMatchers().get(0);
+            ArgoCDConnectionMatcher matcher = property.getMatchers().iterator().next();
             assertEquals("pattern", matcher.getPattern());
             assertEquals("name", matcher.getConnectionName());
         });
@@ -92,7 +92,7 @@ public class PluginConfigurationTest {
             ArgoCDConnectionsProperty property = PluginConfiguration.get().getArgoCDConnectionsProperty();
             assertNotNull("must be present after restart", property);
             assertEquals(1, property.getMatchers().size());
-            ArgoCDConnectionMatcher matcher = property.getMatchers().get(0);
+            ArgoCDConnectionMatcher matcher = property.getMatchers().iterator().next();
             assertEquals("pattern", matcher.getPattern());
             assertEquals("name", matcher.getConnectionName());
         });

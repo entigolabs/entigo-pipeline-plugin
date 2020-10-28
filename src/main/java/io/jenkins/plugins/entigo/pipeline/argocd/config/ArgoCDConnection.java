@@ -48,6 +48,7 @@ public class ArgoCDConnection extends AbstractDescribableImpl<ArgoCDConnection> 
     private final String credentialsId;
     private boolean ignoreCertificateErrors = false;
     private Long appWaitTimeout = 300L;
+    private boolean generateMatcher = true;
     private transient ArgoCDClient client;
 
     @DataBoundConstructor
@@ -85,6 +86,15 @@ public class ArgoCDConnection extends AbstractDescribableImpl<ArgoCDConnection> 
     @DataBoundSetter
     public void setAppWaitTimeout(Long appWaitTimeout) {
         this.appWaitTimeout = appWaitTimeout;
+    }
+
+    public boolean isGenerateMatcher() {
+        return generateMatcher;
+    }
+
+    @DataBoundSetter
+    public void setGenerateMatcher(boolean generateMatcher) {
+        this.generateMatcher = generateMatcher;
     }
 
     public ArgoCDClient getClient() throws AbortException {

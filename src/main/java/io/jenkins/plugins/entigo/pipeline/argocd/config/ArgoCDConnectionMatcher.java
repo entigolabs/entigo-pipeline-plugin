@@ -11,6 +11,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Author: Märt Erlenheim
@@ -33,6 +34,20 @@ public class ArgoCDConnectionMatcher extends AbstractDescribableImpl<ArgoCDConne
 
     public String getConnectionName() {
         return connectionName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ArgoCDConnectionMatcher that = (ArgoCDConnectionMatcher) o;
+        return pattern.equals(that.pattern) &&
+                connectionName.equals(that.connectionName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pattern);
     }
 
     @Extension

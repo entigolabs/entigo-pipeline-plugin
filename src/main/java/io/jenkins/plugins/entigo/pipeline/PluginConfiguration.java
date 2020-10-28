@@ -5,6 +5,7 @@ import hudson.ExtensionList;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.plugins.entigo.pipeline.argocd.config.ArgoCDConnection;
+import io.jenkins.plugins.entigo.pipeline.argocd.config.ArgoCDConnectionMatcher;
 import io.jenkins.plugins.entigo.pipeline.argocd.config.ArgoCDConnectionsProperty;
 import jenkins.model.GlobalConfiguration;
 import net.sf.json.JSONObject;
@@ -26,8 +27,8 @@ public class PluginConfiguration extends GlobalConfiguration {
         return ExtensionList.lookupSingleton(PluginConfiguration.class);
     }
 
-    private ArgoCDConnectionsProperty argoCDConnectionsProperty;
     private List<ArgoCDConnection> argoCDConnections = new ArrayList<>();
+    private ArgoCDConnectionsProperty argoCDConnectionsProperty;
     private String defaultArgoCDConnection;
     private final transient Map<String, ArgoCDConnection> namedArgoCDConnections = new HashMap<>();
 
@@ -45,11 +46,19 @@ public class PluginConfiguration extends GlobalConfiguration {
     public void setArgoCDConnections(List<ArgoCDConnection> argoCDConnections) {
         this.argoCDConnections = argoCDConnections;
         updateNamedArgoCDConnections();
+        generateNameBasedMatchers();
         save();
     }
 
     public ArgoCDConnectionsProperty getArgoCDConnectionsProperty() {
         return argoCDConnectionsProperty;
+    }
+
+    @DataBoundSetter
+    public void setArgoCDConnectionsProperty(ArgoCDConnectionsProperty argoCDConnectionsProperty) {
+        this.argoCDConnectionsProperty = argoCDConnectionsProperty;
+        generateNameBasedMatchers();
+        save();
     }
 
     public String getDefaultArgoCDConnection() {
@@ -59,12 +68,6 @@ public class PluginConfiguration extends GlobalConfiguration {
     @DataBoundSetter
     public void setDefaultArgoCDConnection(String defaultArgoCDConnection) {
         this.defaultArgoCDConnection = defaultArgoCDConnection;
-        save();
-    }
-
-    @DataBoundSetter
-    public void setArgoCDConnectionsProperty(ArgoCDConnectionsProperty argoCDConnectionsProperty) {
-        this.argoCDConnectionsProperty = argoCDConnectionsProperty;
         save();
     }
 
@@ -81,6 +84,19 @@ public class PluginConfiguration extends GlobalConfiguration {
         for (ArgoCDConnection argoCDConnection : argoCDConnections) {
             namedArgoCDConnections.put(argoCDConnection.getName(), argoCDConnection);
         }
+    }
+
+    private void generateNameBasedMatchers() {
+        Set<ArgoCDConnectionMatcher> matchers = new HashSet<>();
+        if (argoCDConnectionsProperty != null && argoCDConnectionsProperty.getMatchers() != null) {
+            matchers.addAll(argoCDConnectionsProperty.getMatchers());
+        }
+        for (ArgoCDConnection connection : argoCDConnections) {
+            if (connection.isGenerateMatcher()) {
+                matchers.add(new ArgoCDConnectionMatcher(connection.getName(), connection.getName()));
+            }
+        }
+        this.argoCDConnectionsProperty = new ArgoCDConnectionsProperty(matchers);
     }
 
     public FormValidation doCheckDefaultArgoCDConnection(@QueryParameter String value) {
@@ -114,7 +130,7 @@ public class PluginConfiguration extends GlobalConfiguration {
             this.argoCDConnections = Collections.emptyList();
         }
         if (json.get("argoCDConnectionsProperty") == null) {
-            this.argoCDConnectionsProperty = new ArgoCDConnectionsProperty(Collections.emptyList());
+            generateNameBasedMatchers();
         }
         return super.configure(req, json);
     }
