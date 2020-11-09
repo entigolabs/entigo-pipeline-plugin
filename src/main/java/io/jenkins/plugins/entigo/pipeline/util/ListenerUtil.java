@@ -18,4 +18,12 @@ public class ListenerUtil {
             listener.getLogger().println(message);
         }
     }
+
+    public static void error(TaskListener listener, String message) {
+        if (listener == null) {
+            LOGGER.fine("Listener is null, error to print: " + message);
+        } else {
+            listener.error(message);
+        }
+    }
 }

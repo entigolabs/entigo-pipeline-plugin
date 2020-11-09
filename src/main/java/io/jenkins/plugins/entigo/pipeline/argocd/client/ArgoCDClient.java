@@ -1,10 +1,9 @@
 package io.jenkins.plugins.entigo.pipeline.argocd.client;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.jenkins.plugins.entigo.pipeline.argocd.model.ApplicationSyncRequest;
-import io.jenkins.plugins.entigo.pipeline.argocd.model.ApplicationWatchEvent;
 import io.jenkins.plugins.entigo.pipeline.argocd.model.UserInfo;
-import org.glassfish.jersey.client.ChunkedInput;
+
+import javax.ws.rs.core.Response;
 
 /**
  * Author: Märt Erlenheim
@@ -16,9 +15,7 @@ public interface ArgoCDClient {
 
     UserInfo getUserInfo();
 
-    // Annotation needed because of Spotbugs false positive https://github.com/spotbugs/spotbugs/pull/1248
-    @NonNull
-    ChunkedInput<ApplicationWatchEvent> watchApplication(String applicationName);
+    Response watchApplication(String applicationName, Integer readTimeout);
 
     void close();
 }
