@@ -10,8 +10,8 @@ import org.jenkinsci.plugins.workflow.steps.StepContext;
 
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * Author: Märt Erlenheim
@@ -118,15 +118,14 @@ public class ArgoCDWaitProcess extends AbstractProcess {
             ApplicationStatus status = application.getStatus();
             if (status.getOperationState().getFinishedAt() == null || (status.getReconciledAt() == null ||
                     status.getReconciledAt().isBefore(status.getOperationState().getFinishedAt()))) {
-                logMessage("Operation is in progress, phase: " + application.getStatus().getOperationState()
-                        .getPhase());
+                logMessage(getStatus(application, true));
                 return false;
             }
         }
 
         String healthStatus = application.getStatus().getHealth().getStatus();
         String syncStatus = application.getStatus().getSync().getStatus();
-        logMessage(getStatus(application));
+        logMessage(getStatus(application, false));
         return Health.HEALTHY.getStatus().equals(healthStatus) && Sync.SYNCED.getStatus().equals(syncStatus);
     }
 
@@ -137,30 +136,28 @@ public class ArgoCDWaitProcess extends AbstractProcess {
         }
     }
 
-    private String getStatus(Application application) {
-        Set<String> unSyncedResources = new HashSet<>();
-        Set<String> unHealthyResources = new HashSet<>();
-        for (ResourceStatus resource : application.getStatus().getResources()) {
-            if (!Sync.SYNCED.getStatus().equals(resource.getStatus())) {
-                unSyncedResources.add(resource.getName());
-            } else if (!Health.HEALTHY.getStatus().equals(resource.getHealth().getStatus())) {
-                unHealthyResources.add(resource.getName());
-            }
-        }
+    private String getStatus(Application application, Boolean operationInProgress) {
         StringBuilder sb = new StringBuilder();
-        if (unSyncedResources.isEmpty() && unHealthyResources.isEmpty()) {
-            sb.append("Resources are all synced and healthy");
+        if (operationInProgress) {
+            sb.append("Operation in progress");
         } else {
-            sb.append("Operation finished, waiting for resources");
-            if (!unSyncedResources.isEmpty()) {
-                sb.append("; Out of sync: ");
-                sb.append(String.join(", ", unSyncedResources));
-            }
-            if (!unHealthyResources.isEmpty()) {
-                sb.append("; Unhealthy: ");
-                sb.append(String.join(", ", unHealthyResources));
+            sb.append("Operation finished");
+        }
+        sb.append(", resource statuses: ");
+        sb.append(getResourceStatuses(application.getStatus().getResources()));
+        return sb.toString();
+    }
+
+    private String getResourceStatuses(List<ResourceStatus> resources) {
+        StringJoiner sb = new StringJoiner("; ");
+        for (ResourceStatus resource : resources) {
+            if (!Sync.SYNCED.getStatus().equals(resource.getStatus())) {
+                sb.add(resource.getName() + " - out of sync");
+            } else {
+                sb.add(resource.getName() + " - " + resource.getHealth().getStatus());
             }
         }
+
         return sb.toString();
     }
 }
