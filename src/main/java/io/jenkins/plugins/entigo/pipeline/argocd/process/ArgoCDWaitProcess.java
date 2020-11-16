@@ -48,6 +48,7 @@ public class ArgoCDWaitProcess extends AbstractProcess {
                 ApplicationWatchEvent event;
                 while ((event = input.read()) != null && wait) {
                     if (Thread.currentThread().isInterrupted()) {
+                        ListenerUtil.println(listener, "Process was interrupted, stopping process");
                         return;
                     }
                     retryDelay = INITIAL_RETRY_DELAY;
@@ -149,15 +150,18 @@ public class ArgoCDWaitProcess extends AbstractProcess {
     }
 
     private String getResourceStatuses(List<ResourceStatus> resources) {
-        StringJoiner sb = new StringJoiner("; ");
-        for (ResourceStatus resource : resources) {
-            if (!Sync.SYNCED.getStatus().equals(resource.getStatus())) {
-                sb.add(resource.getName() + " - out of sync");
-            } else {
-                sb.add(resource.getName() + " - " + resource.getHealth().getStatus());
+        if (resources == null || resources.size() == 0) {
+            return "no resources found";
+        } else {
+            StringJoiner sb = new StringJoiner("; ");
+            for (ResourceStatus resource : resources) {
+                if (!Sync.SYNCED.getStatus().equals(resource.getStatus())) {
+                    sb.add(resource.getName() + " - out of sync");
+                } else {
+                    sb.add(resource.getName() + " - " + resource.getHealth().getStatus());
+                }
             }
+            return sb.toString();
         }
-
-        return sb.toString();
     }
 }
