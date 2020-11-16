@@ -156,18 +156,21 @@ public class ArgoCDWaitProcess extends AbstractProcess {
             StringJoiner sb = new StringJoiner("; ");
             for (ResourceStatus resource : resources) {
                 if (!Sync.SYNCED.getStatus().equals(resource.getStatus())) {
-                    sb.add(resource.getName() + " - out of sync");
-                } else {
-                    String status;
-                    if (resource.getHealth() == null) {
-                        status = Health.UNKNOWN.getStatus();
-                    } else {
-                        status = resource.getHealth().getStatus();
-                    }
-                    sb.add(resource.getName() + " - " + status);
+                    sb.add(getResourceStatus(resource, "out of sync"));
+                } else if (resource.getHealth() != null &&
+                        !Health.HEALTHY.getStatus().equals(resource.getHealth().getStatus())) {
+                    sb.add(getResourceStatus(resource, resource.getHealth().getStatus()));
                 }
             }
-            return sb.toString();
+            if (sb.length() == 0) {
+                return "all ready";
+            } else {
+                return sb.toString();
+            }
         }
+    }
+
+    private String getResourceStatus(ResourceStatus resource, String status) {
+        return String.format("%s (%s) - %s", resource.getName(), resource.getKind(), status);
     }
 }
