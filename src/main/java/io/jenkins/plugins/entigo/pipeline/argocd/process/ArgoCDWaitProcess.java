@@ -158,7 +158,13 @@ public class ArgoCDWaitProcess extends AbstractProcess {
                 if (!Sync.SYNCED.getStatus().equals(resource.getStatus())) {
                     sb.add(resource.getName() + " - out of sync");
                 } else {
-                    sb.add(resource.getName() + " - " + resource.getHealth().getStatus());
+                    String status;
+                    if (resource.getHealth() == null) {
+                        status = Health.UNKNOWN.getStatus();
+                    } else {
+                        status = resource.getHealth().getStatus();
+                    }
+                    sb.add(resource.getName() + " - " + status);
                 }
             }
             return sb.toString();
