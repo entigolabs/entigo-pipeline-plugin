@@ -34,7 +34,11 @@ public class TimeoutExecution {
                 process.failure(new AbortException("Process timed out"));
             }, delay, TimeUnit.MILLISECONDS);
             processTask = Timer.get().submit(() -> {
-                process.start();
+                try {
+                    process.start();
+                } catch (Exception exception) {
+                    process.failure(exception);
+                }
                 timeoutTask.cancel(true); // Need to cancel or it causes an already delivered failure
             });
         } else {

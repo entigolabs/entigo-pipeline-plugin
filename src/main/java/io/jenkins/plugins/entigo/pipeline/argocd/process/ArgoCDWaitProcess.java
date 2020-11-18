@@ -1,5 +1,6 @@
 package io.jenkins.plugins.entigo.pipeline.argocd.process;
 
+import hudson.AbortException;
 import hudson.model.TaskListener;
 import io.jenkins.plugins.entigo.pipeline.argocd.client.ArgoCDClient;
 import io.jenkins.plugins.entigo.pipeline.argocd.model.*;
@@ -69,15 +70,7 @@ public class ArgoCDWaitProcess extends AbstractProcess {
             } finally {
                 close();
             }
-            try {
-                // TODO Should we use a jenkins Timer or a Task Scheduler for waiting?
-                Thread.sleep(retryDelay * 1000L);
-            } catch (InterruptedException e) {
-                if (wait) {
-                    ListenerUtil.println(listener, "Process was interrupted, stopping process");
-                    wait = false;
-                }
-            }
+            sleep(retryDelay * 1000L);
             if (retryDelay < MAX_RETRY_DELAY) {
                 retryDelay = Math.min(MAX_RETRY_DELAY, retryDelay * 2);
             }
@@ -90,6 +83,18 @@ public class ArgoCDWaitProcess extends AbstractProcess {
         this.wait = false;
         ListenerUtil.println(listener, "Stopping the process can take up to " + READ_TIMEOUT / 1000 + " seconds");
         close();
+    }
+
+    private void sleep(Long delay) {
+        try {
+            // TODO Should we use a jenkins Timer or a Task Scheduler for waiting?
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            if (wait) {
+                ListenerUtil.println(listener, "Process was interrupted, stopping process");
+                wait = false;
+            }
+        }
     }
 
     private ChunkedInput<ApplicationWatchEvent> getInput() {
@@ -117,8 +122,11 @@ public class ArgoCDWaitProcess extends AbstractProcess {
             return false;
         } else if (application.getStatus().getOperationState() != null) {
             ApplicationStatus status = application.getStatus();
-            if (status.getOperationState().getFinishedAt() == null || (status.getReconciledAt() == null ||
-                    status.getReconciledAt().isBefore(status.getOperationState().getFinishedAt()))) {
+            OperationState operationState = status.getOperationState();
+            if (OperationPhase.FAILED.getPhase().equals(operationState.getPhase())) {
+                return failProcess(operationState);
+            }  else if (operationState.getFinishedAt() == null || (status.getReconciledAt() == null ||
+                    status.getReconciledAt().isBefore(operationState.getFinishedAt()))) {
                 logMessage(getStatus(application, true));
                 return false;
             }
@@ -128,6 +136,24 @@ public class ArgoCDWaitProcess extends AbstractProcess {
         String syncStatus = application.getStatus().getSync().getStatus();
         logMessage(getStatus(application, false));
         return Health.HEALTHY.getStatus().equals(healthStatus) && Sync.SYNCED.getStatus().equals(syncStatus);
+    }
+
+    private Boolean failProcess(OperationState operationState) {
+        wait = false;
+        logSyncFailures(operationState.getSyncResult());
+        failure(new AbortException("ArgoCD operation failed with message: " + operationState.getMessage()));
+        return false;
+    }
+
+    private void logSyncFailures(OperationResult result) {
+        if (result != null && result.getResources() != null) {
+            for (ResourceResult resource : result.getResources()) {
+                if (Sync.SYNC_FAILED.getStatus().equals(resource.getStatus())) {
+                    ListenerUtil.error(listener, String.format("%s (%s) - %s, %s", resource.getName(),
+                            resource.getKind(), resource.getStatus(), resource.getMessage()));
+                }
+            }
+        }
     }
 
     private void logMessage(String message) {
@@ -156,7 +182,7 @@ public class ArgoCDWaitProcess extends AbstractProcess {
             StringJoiner sb = new StringJoiner("; ");
             for (ResourceStatus resource : resources) {
                 if (!Sync.SYNCED.getStatus().equals(resource.getStatus())) {
-                    sb.add(getResourceStatus(resource, "out of sync"));
+                    sb.add(getResourceStatus(resource, resource.getStatus()));
                 } else if (resource.getHealth() != null &&
                         !Health.HEALTHY.getStatus().equals(resource.getHealth().getStatus())) {
                     sb.add(getResourceStatus(resource, resource.getHealth().getStatus()));
