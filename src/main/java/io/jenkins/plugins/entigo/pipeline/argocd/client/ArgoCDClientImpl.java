@@ -3,14 +3,9 @@ package io.jenkins.plugins.entigo.pipeline.argocd.client;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.cli.NoCheckTrustManager;
-import io.jenkins.plugins.entigo.pipeline.argocd.model.ApplicationSyncRequest;
-import io.jenkins.plugins.entigo.pipeline.argocd.model.ErrorResponse;
-import io.jenkins.plugins.entigo.pipeline.argocd.model.UserInfo;
-import io.jenkins.plugins.entigo.pipeline.rest.Oauth2AuthenticationFilter;
-import io.jenkins.plugins.entigo.pipeline.rest.ResponseException;
+import io.jenkins.plugins.entigo.pipeline.argocd.model.*;
+import io.jenkins.plugins.entigo.pipeline.rest.*;
 import io.jenkins.plugins.entigo.pipeline.util.ProcessingExceptionUtil;
-import io.jenkins.plugins.entigo.pipeline.rest.ClientException;
-import io.jenkins.plugins.entigo.pipeline.rest.JacksonConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.glassfish.jersey.client.ClientProperties;
 
@@ -87,9 +82,15 @@ public class ArgoCDClientImpl implements ArgoCDClient {
     }
 
     @Override
-    public void syncApplication(String applicationName, ApplicationSyncRequest request) {
-        // Have to use Void response type or else jersey won't throw Not Found and Forbidden exceptions
-        postRequest("applications/{name}/sync", Void.class, request,
+    public Application getApplication(String applicationName, String projectName) {
+        Map<String, Object> queryParams = projectName == null ? null : Collections.singletonMap("project", projectName);
+        return getRequest("applications/{name}", Application.class,
+                Collections.singletonMap("name", applicationName), queryParams);
+    }
+
+    @Override
+    public Application syncApplication(String applicationName, ApplicationSyncRequest request) {
+        return postRequest("applications/{name}/sync", Application.class, request,
                 Collections.singletonMap("name", applicationName), null);
     }
 
@@ -144,6 +145,9 @@ public class ArgoCDClientImpl implements ArgoCDClient {
             if (response != null && response.hasEntity()) {
                 try {
                     ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
+                    if (errorResponse.getCode() == 5) {
+                        throw new NotFoundException("Artifact was not found");
+                    }
                     if (StringUtils.isNotEmpty(errorResponse.getError())) {
                         throw new ResponseException(errorResponse.getError());
                     }

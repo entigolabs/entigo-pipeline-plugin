@@ -2,7 +2,6 @@ package io.jenkins.plugins.entigo.pipeline.argocd.config;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import hudson.AbortException;
@@ -19,6 +18,8 @@ import io.jenkins.plugins.entigo.pipeline.argocd.client.ArgoCDClientBuilder;
 import io.jenkins.plugins.entigo.pipeline.argocd.model.UserInfo;
 import io.jenkins.plugins.entigo.pipeline.rest.ResponseException;
 import io.jenkins.plugins.entigo.pipeline.rest.ClientException;
+import io.jenkins.plugins.entigo.pipeline.util.CredentialsUtil;
+import io.jenkins.plugins.entigo.pipeline.util.FormValidationUtil;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
@@ -34,8 +35,6 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 import javax.ws.rs.core.UriBuilder;
 
 import java.net.URI;
-
-import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
 
 /**
  * Author: Märt Erlenheim
@@ -114,28 +113,17 @@ public class ArgoCDConnection extends AbstractDescribableImpl<ArgoCDConnection> 
     }
 
     @Restricted(NoExternalUse.class)
-    private String getApiToken() {
-        StandardCredentials credentials = CredentialsMatchers.firstOrNull(
-                lookupCredentials(
-                        StandardCredentials.class,
-                        Jenkins.get(),
-                        ACL.SYSTEM,
-                        URIRequirementBuilder.fromUri(uri).build()
-                ), CredentialsMatchers.withId(credentialsId));
-        if (credentials instanceof StringCredentials) {
-            return ((StringCredentials) credentials).getSecret().getPlainText();
-        }
-        throw new IllegalStateException("No credentials found with credentialsId: " + credentialsId);
+    private String getApiToken() throws AbortException {
+        StringCredentials credentials = CredentialsUtil.findCredentialsById(credentialsId, StringCredentials.class,
+                URIRequirementBuilder.fromUri(uri).build());
+        return credentials.getSecret().getPlainText();
     }
 
     @Extension
     public static class DescriptorImpl extends Descriptor<ArgoCDConnection> {
 
         public FormValidation doCheckName(@QueryParameter String value) {
-            if (StringUtils.isEmpty(value)) {
-                return FormValidation.error("Name is required.");
-            }
-            return FormValidation.ok();
+            return FormValidationUtil.doCheckRequiredField(value, "Name is required");
         }
 
         public FormValidation doCheckUri(@QueryParameter String value) {
@@ -151,44 +139,12 @@ public class ArgoCDConnection extends AbstractDescribableImpl<ArgoCDConnection> 
 
         public FormValidation doCheckCredentialsId(@AncestorInPath Item item, @QueryParameter String uri,
                                                    @QueryParameter String value) {
-            if (item == null) {
-                if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
-                    return FormValidation.ok();
-                }
-            } else {
-                if (!item.hasPermission(Item.EXTENDED_READ)
-                        && !item.hasPermission(CredentialsProvider.USE_ITEM)) {
-                    return FormValidation.ok();
-                }
-            }
-            if (StringUtils.isEmpty(value)) {
-                return FormValidation.error("Credentials are required.");
-            }
-            if (CredentialsProvider.listCredentials(
-                    StandardCredentials.class,
-                    item,
-                    ACL.SYSTEM,
-                    URIRequirementBuilder.fromUri(uri).build(),
-                    CredentialsMatchers.withId(value)
-            ).isEmpty()) {
-                return FormValidation.error("Cannot find currently selected credentials");
-            }
-            return FormValidation.ok();
+            return CredentialsUtil.checkCredentialsId(item, value, StringCredentials.class,
+                    URIRequirementBuilder.fromUri(uri).build());
         }
 
         public FormValidation doCheckAppWaitTimeout(@QueryParameter String value) {
-            if (StringUtils.isEmpty(value)) {
-                return FormValidation.error("Timeout is required.");
-            }
-            try {
-                long timeout = Long.parseLong(value);
-                if (timeout < 1L || timeout > 1800L) {
-                    return FormValidation.error("Timeout must be between 1 and 1800");
-                }
-            } catch (NumberFormatException exception) {
-                return FormValidation.error("Must be a positive number");
-            }
-            return FormValidation.ok();
+            return FormValidationUtil.doCheckTimeout(value, 1L, 1800L, true);
         }
 
         @RequirePOST
@@ -238,7 +194,7 @@ public class ArgoCDConnection extends AbstractDescribableImpl<ArgoCDConnection> 
                     .includeMatchingAs(
                             ACL.SYSTEM,
                             item,
-                            StandardCredentials.class,
+                            StringCredentials.class,
                             URIRequirementBuilder.fromUri(uri).build(),
                             CredentialsMatchers.always()
                     )

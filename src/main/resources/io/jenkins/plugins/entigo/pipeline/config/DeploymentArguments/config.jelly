@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:block>
+        <f:entry field="repoUrl" title="${%Repository url}">
+            <f:textbox/>
+        </f:entry>
+        <f:entry field="repoPath" title="${%Repository path}">
+            <f:textbox/>
+        </f:entry>
+        <f:entry field="templatePath" title="${%Template path}">
+            <f:textbox/>
+        </f:entry>
+        <f:entry field="targetRevision" title="${%ArgoCD target revision}">
+            <f:textbox/>
+        </f:entry>
+        <f:entry field="clusterUrl" title="${%Kubernetes cluster URL}">
+            <f:textbox/>
+        </f:entry>
+        <f:entry field="targetNamespace" title="${%Kubernetes namespace}">
+            <f:textbox/>
+        </f:entry>
+    </f:block>
+</j:jelly>

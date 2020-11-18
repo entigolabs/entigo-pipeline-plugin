@@ -1,3 +1,5 @@
+# Entigo Pipeline Plugin
+
 Jenkins plugin for building CI/CD pipelines on top of Kubernetes and ArgoCD.
 
 * [Introduction](#introduction)
@@ -8,13 +10,13 @@ Jenkins plugin for building CI/CD pipelines on top of Kubernetes and ArgoCD.
     * [Pipeline steps](#argocd-pipeline-steps)
     * [Working example](#argocd-working-example)
 
-# Introduction
+## Introduction
 
 The goal of this project is to provide easy to use tools for setting up a software pipeline. Functionality will be based on the CI/CD pipeline best practises developed by Entigo which describe how to build the software, run it through analysis, tests and environments, and deploy the results to production.
 
 This plugin is still in active development and more functionality will be implemented soon.
 
-# ArgoCD Integration
+## ArgoCD Integration
 
 Before using any build steps
 
@@ -24,7 +26,7 @@ Before using any build steps
     2. Selector set with env variable ARGO_CD_SELECTOR
     3. Default ArgoCD connection set in the global configuration
 
-## ArgoCD Configuration
+### ArgoCD Configuration
 
 * Connections
     * Connection name - unique name for a connection which is used when selecting a connection during a build.
@@ -38,13 +40,13 @@ Before using any build steps
     * Matching Pattern - Java regex based pattern which will be matched against the specified selector value.
     * Connection name - name of the connection to use when pattern matches.
     
-## ArgoCD Environmental variables
+### ArgoCD Environmental variables
 
 * ARGO_CD_SELECTOR - **Optional**, overrides the global default connection, sets a value which is used to select a connection based on the configured connection matchers. For example: `env.GIT_BRANCH`
 
-## ArgoCD Job options
+### ArgoCD Job options
 
-### argoCDConnections
+#### argoCDConnections
 
 **Optional**, overrides the global configuration of connection matchers. Can be set through the Job UI or DSL. Parameters:
 
@@ -62,9 +64,9 @@ options {
 }
 ```
 
-## ArgoCD Pipeline steps
+### ArgoCD Pipeline steps
 
-### syncArgoApp
+#### syncArgoApp
 
 Sends application sync request to ArgoCD. Parameters:
 
@@ -81,7 +83,7 @@ Full example
 
 ```syncArgoApp wait: true, name: 'application-name', waitTimeout: 600, connectionSelector: 'selector-value'```
 
-## ArgoCD Working example
+### ArgoCD Working example
 
 When creating a connection in the configuration, don't uncheck the matcher generation. Replace the connection-name value with the name of a pre-configured connection and application-name with the name of the ArgoCD application to synchronize.
 
@@ -89,7 +91,7 @@ When creating a connection in the configuration, don't uncheck the matcher gener
 pipeline {
     agent any
     stages {
-        stage('Entigo') {
+        stage('ArgoCD sync') {
             steps {
                 syncArgoApp name: 'application-name', connectionSelector: 'connection-name'
             }
