@@ -12,7 +12,45 @@
             </f:repeatableProperty>
         </f:entry>
         <f:entry>
+            <div align="left">
+                <span class="yui-button yui-push-button">
+                    <span class="first-child">
+                        <button type="button" tabindex="0" onclick="fillConnectionNames()">Update connection lists</button>
+                    </span>
+                </span>
+            </div>
+            <f:description>After applying the changes to connection names, use this to update selections</f:description>
+        </f:entry>
+        <f:entry field="defaultArgoCDConnection" title="${%Default ArgoCD connection}">
+            <f:select clazz="argocd-connection-select"/>
+        </f:entry>
+        <f:entry>
             <f:property field="argoCDConnectionsProperty"/>
         </f:entry>
     </f:section>
+    <script type="text/javascript">
+        function fillConnectionNames() {
+            $$('select.argocd-connection-select').each(function (e) {
+                let value = e.value;
+                updateListBox(e, e.getAttribute("fillUrl"), {
+                    onSuccess: function () {
+                        if (value == "") {
+                            let v = e.getAttribute("value");
+                            if (v) {
+                                e.value = v;
+                                if (e.value == v) {
+                                    e.removeAttribute("value");
+                                }
+                            }
+                        }
+
+                        // if the update changed the current selection, others listening to this control needs to be notified.
+                        if (e.value != value) {
+                            fireEvent(e, "change");
+                        }
+                    }
+                });
+            });
+        }
+    </script>
 </j:jelly>

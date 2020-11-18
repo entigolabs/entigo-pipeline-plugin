@@ -5,11 +5,14 @@
         <f:entry field="name" title="${%ArgoCD application name}">
             <f:textbox/>
         </f:entry>
+        <f:entry field="connectionSelector" title="${%ArgoCD Connection selector}">
+            <f:textbox/>
+        </f:entry>
+        <f:entry field="wait" title="${%Wait for sync to complete}">
+            <f:checkbox default="true"/>
+        </f:entry>
         <f:entry field="waitTimeout" title="${%ArgoCD action wait timeout}">
             <f:number />
-        </f:entry>
-        <f:entry field="async" title="${%Don't wait for sync to complete}">
-            <f:checkbox />
         </f:entry>
     </f:block>
 </j:jelly>

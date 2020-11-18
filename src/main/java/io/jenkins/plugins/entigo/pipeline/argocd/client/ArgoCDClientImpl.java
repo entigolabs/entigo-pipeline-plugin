@@ -4,7 +4,6 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.cli.NoCheckTrustManager;
 import io.jenkins.plugins.entigo.pipeline.argocd.model.ApplicationSyncRequest;
-import io.jenkins.plugins.entigo.pipeline.argocd.model.ApplicationWatchEvent;
 import io.jenkins.plugins.entigo.pipeline.argocd.model.ErrorResponse;
 import io.jenkins.plugins.entigo.pipeline.argocd.model.UserInfo;
 import io.jenkins.plugins.entigo.pipeline.rest.Oauth2AuthenticationFilter;
@@ -13,7 +12,7 @@ import io.jenkins.plugins.entigo.pipeline.util.ProcessingExceptionUtil;
 import io.jenkins.plugins.entigo.pipeline.rest.ClientException;
 import io.jenkins.plugins.entigo.pipeline.rest.JacksonConfiguration;
 import org.apache.commons.lang.StringUtils;
-import org.glassfish.jersey.client.ChunkedInput;
+import org.glassfish.jersey.client.ClientProperties;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -25,13 +24,14 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Author: Märt Erlenheim
@@ -40,6 +40,7 @@ import java.util.Map;
 public class ArgoCDClientImpl implements ArgoCDClient {
 
     private static final String ARGOCD_API_PATH = "api/v1/";
+    private static final Long DEFAULT_CONNECT_TIMEOUT = 30000L;
 
     private final Client restClient;
     private final WebTarget apiTarget;
@@ -52,6 +53,7 @@ public class ArgoCDClientImpl implements ArgoCDClient {
 
     private Client buildClient(boolean ignoreCertificateErrors) throws ClientException {
         ClientBuilder clientBuilder = ClientBuilder.newBuilder()
+                .connectTimeout(DEFAULT_CONNECT_TIMEOUT, TimeUnit.MILLISECONDS)
                 .register(JacksonJsonProvider.class)
                 .register(JacksonConfiguration.class);
 
@@ -86,21 +88,20 @@ public class ArgoCDClientImpl implements ArgoCDClient {
 
     @Override
     public void syncApplication(String applicationName, ApplicationSyncRequest request) {
-        // Have to use Void response type or else resteasy won't throw Not Found and Forbidden exceptions
+        // Have to use Void response type or else jersey won't throw Not Found and Forbidden exceptions
         postRequest("applications/{name}/sync", Void.class, request,
                 Collections.singletonMap("name", applicationName), null);
     }
 
     @Override
     @NonNull
-    public ChunkedInput<ApplicationWatchEvent> watchApplication(String applicationName) {
-        Response response = getRequest("stream/applications", Response.class, Collections.emptyMap(),
-                Collections.singletonMap("name", applicationName));
-        final ChunkedInput<ApplicationWatchEvent> input = response.readEntity(
-                new GenericType<ChunkedInput<ApplicationWatchEvent>>() {}
-        );
-        input.setParser(ChunkedInput.createParser("\n"));
-        return input;
+    public Response watchApplication(String applicationName, Integer readTimeout) {
+        Map<String, Object> properties = new HashMap<>();
+        if (readTimeout != null && readTimeout > 0) {
+            properties.put(ClientProperties.READ_TIMEOUT, readTimeout);
+        }
+        return doRequest(HttpMethod.GET, "stream/applications", Response.class, null, Collections.emptyMap(),
+                Collections.singletonMap("name", applicationName), properties);
     }
 
     private <T> T getRequest(String path, Class<T> responseType) {
@@ -118,12 +119,23 @@ public class ArgoCDClientImpl implements ArgoCDClient {
     }
 
     private <T> T doRequest(String method, String path, Class<T> responseType, Object request,
-                            Map<String, Object> uriParams, Map<String, Object> queryParams) throws ResponseException {
+                            Map<String, Object> uriParams, Map<String, Object> queryParams) {
+        return doRequest(method, path, responseType, request, uriParams, queryParams, null);
+    }
+
+    private <T> T doRequest(String method, String path, Class<T> responseType, Object request,
+                            Map<String, Object> uriParams, Map<String, Object> queryParams,
+                            Map<String, Object> properties) {
         try {
             WebTarget target = apiTarget.path(path).resolveTemplates(uriParams);
             if (queryParams != null) {
                 for (Map.Entry<String, Object> queryParam : queryParams.entrySet()) {
-                    target.queryParam(queryParam.getKey(), queryParam.getValue());
+                    target = target.queryParam(queryParam.getKey(), queryParam.getValue());
+                }
+            }
+            if (properties != null) {
+                for (Map.Entry<String, Object> property : properties.entrySet()) {
+                    target.property(property.getKey(), property.getValue());
                 }
             }
             return target.request(MediaType.APPLICATION_JSON).method(method, Entity.json(request), responseType);

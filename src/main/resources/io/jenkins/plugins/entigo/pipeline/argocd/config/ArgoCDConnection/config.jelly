@@ -19,5 +19,8 @@
         <f:entry field="appWaitTimeout" title="${%ArgoCD app wait timeout}">
             <f:number default="300"/>
         </f:entry>
+        <f:entry title="${%Generate a name based matcher}" field="generateMatcher">
+            <f:checkbox default="true"/>
+        </f:entry>
     </f:block>
 </j:jelly>

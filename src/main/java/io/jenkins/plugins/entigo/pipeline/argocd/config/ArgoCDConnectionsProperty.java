@@ -12,7 +12,7 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -24,15 +24,27 @@ public class ArgoCDConnectionsProperty extends JobProperty<Job<?, ?>> {
     private static final Logger LOGGER = Logger.getLogger(ArgoCDConnectionsProperty.class.getName());
     private static final String SELECTOR_ENV_VAR = "ARGO_CD_SELECTOR";
 
-    private final List<ArgoCDConnectionMatcher> matchers;
+    private final Set<ArgoCDConnectionMatcher> matchers;
 
     @DataBoundConstructor
-    public ArgoCDConnectionsProperty(List<ArgoCDConnectionMatcher> matchers) {
+    public ArgoCDConnectionsProperty(Set<ArgoCDConnectionMatcher> matchers) {
         this.matchers = matchers;
     }
 
-    public List<ArgoCDConnectionMatcher> getMatchers() {
+    public Set<ArgoCDConnectionMatcher> getMatchers() {
         return matchers;
+    }
+
+    public static ArgoCDConnection getConnection(@NotNull Run<?, ?> build, EnvVars envVars, String connectionSelector)
+            throws IOException {
+        String connectionName = getConnectionName(build, envVars, connectionSelector);
+        ArgoCDConnection connection = PluginConfiguration.get().getArgoCDConnection(connectionName);
+        if (connection == null) {
+            throw new AbortException(String.format("ArgoCD connection named \"%s\" not found, either use a correct " +
+                    "selector or set a global default connection", connectionName));
+        } else {
+            return connection;
+        }
     }
 
     public static ArgoCDConnectionsProperty getJobProperty(@NotNull Run<?, ?> build) throws IOException {
@@ -42,35 +54,39 @@ public class ArgoCDConnectionsProperty extends JobProperty<Job<?, ?>> {
             LOGGER.fine("No job specific ArgoCD connection property set, falling back to global config");
             property = PluginConfiguration.get().getArgoCDConnectionsProperty();
             if (property == null) {
-                throw new AbortException("ArgoCD connection matcher was not set");
+                throw new AbortException("ArgoCD connection matchers were not set");
             }
         }
         return property;
     }
 
-    private String getConnectionName(EnvVars envVars) throws AbortException {
-        String selector = envVars.get(SELECTOR_ENV_VAR);
-        if (StringUtils.isEmpty(selector)) {
-            throw new AbortException("ArgoCD selector env variable not set, variable name must be " + SELECTOR_ENV_VAR);
-        }
-
-        for (ArgoCDConnectionMatcher matcher : matchers) {
-            if (selector.matches(matcher.getPattern())) {
-                return matcher.getConnectionName();
+    private static String getSelector(EnvVars envVars, String connectionSelector) {
+        if (StringUtils.isBlank(connectionSelector)) {
+            String selector = envVars.get(SELECTOR_ENV_VAR);
+            if (StringUtils.isBlank(selector)) {
+                return null;
+            } else {
+                return selector;
             }
+        } else {
+            return connectionSelector;
         }
-
-        throw new AbortException("Couldn't find a matching ArgoCD connection with selector: " + selector);
     }
 
-    public static ArgoCDConnection getConnection(@NotNull Run<?, ?> build, EnvVars envVars) throws IOException {
-        ArgoCDConnectionsProperty property = getJobProperty(build);
-        String connectionName = property.getConnectionName(envVars);
-        ArgoCDConnection connection = PluginConfiguration.get().getArgoCDConnection(connectionName);
-        if (connection == null) {
-            throw new AbortException("Couldn't find an ArgoCD connection with name " + connectionName);
+    private static String getConnectionName(Run<?, ?> build, EnvVars envVars, String connectionSelector)
+            throws IOException {
+        String selector = getSelector(envVars, connectionSelector);
+        if (selector == null) {
+            return PluginConfiguration.get().getDefaultArgoCDConnection();
         } else {
-            return connection;
+            ArgoCDConnectionsProperty property = getJobProperty(build);
+            for (ArgoCDConnectionMatcher matcher : property.getMatchers()) {
+                if (selector.matches(matcher.getPattern())) {
+                    return matcher.getConnectionName();
+                }
+            }
+
+            throw new AbortException("Couldn't find a matching ArgoCD connection with selector: " + selector);
         }
     }
 
