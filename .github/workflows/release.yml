@@ -6,8 +6,6 @@ name: entigo-pipeline-plugin
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
 jobs:
   release:
