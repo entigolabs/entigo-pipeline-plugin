@@ -20,6 +20,8 @@ jobs:
         java-version: 11
     - name: Build 
       run: ./mvnw install -q
+    - name: Sonar 
+      run: ./mvnw verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
     - name: Get version
       run: |
         VERSION=$( ./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout )
