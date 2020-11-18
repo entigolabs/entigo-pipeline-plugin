@@ -42,7 +42,7 @@ public class ApplicationSyncStepExecution extends AbstractStepExecutionImpl {
         ListenerUtil.println(listener, "Using ArgoCD connection: " + connection.getName());
         ArgoCDService argoCDService = new ArgoCDService(connection.getClient());
         argoCDService.syncApplication(step.getName());
-        if (step.getWait()) {
+        if (Boolean.TRUE.equals(step.getWait())) {
             waitApplicationSync(listener, connection, argoCDService);
             this.executing = null;
             return false;
@@ -66,12 +66,12 @@ public class ApplicationSyncStepExecution extends AbstractStepExecutionImpl {
         if (timeoutExecution != null) {
             timeoutExecution.stop();
         }
-        Thread executing = this.executing;
-        if (executing != null) {
-            if (executing instanceof Executor) {
-                ((Executor)executing).interrupt(Result.ABORTED);
+        Thread executionThread = this.executing;
+        if (executionThread != null) {
+            if (executionThread instanceof Executor) {
+                ((Executor)executionThread).interrupt(Result.ABORTED);
             } else {
-                executing.interrupt();
+                executionThread.interrupt();
             }
         }
         super.stop(cause);

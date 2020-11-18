@@ -94,17 +94,18 @@ public class ArgoCDWaitProcess extends AbstractProcess {
                 ListenerUtil.println(listener, "Process was interrupted, stopping process");
                 wait = false;
             }
+            Thread.currentThread().interrupt();
         }
     }
 
     private ChunkedInput<ApplicationWatchEvent> getInput() {
         // Using timeout because otherwise closing a blocking InputStream would be only possible when the block releases
         this.response = argoCDClient.watchApplication(applicationName, READ_TIMEOUT);
-        ChunkedInput<ApplicationWatchEvent> input = response.readEntity(
+        ChunkedInput<ApplicationWatchEvent> chunkedInput = response.readEntity(
                 new GenericType<ChunkedInput<ApplicationWatchEvent>>() {}
         );
-        input.setParser(ChunkedInput.createParser("\n"));
-        return input;
+        chunkedInput.setParser(ChunkedInput.createParser("\n"));
+        return chunkedInput;
     }
 
     private void close() {
@@ -163,7 +164,7 @@ public class ArgoCDWaitProcess extends AbstractProcess {
         }
     }
 
-    private String getStatus(Application application, Boolean operationInProgress) {
+    private String getStatus(Application application, boolean operationInProgress) {
         StringBuilder sb = new StringBuilder();
         if (operationInProgress) {
             sb.append("Operation in progress");
@@ -176,7 +177,7 @@ public class ArgoCDWaitProcess extends AbstractProcess {
     }
 
     private String getResourceStatuses(List<ResourceStatus> resources) {
-        if (resources == null || resources.size() == 0) {
+        if (resources == null || resources.isEmpty()) {
             return "no resources found";
         } else {
             StringJoiner sb = new StringJoiner("; ");

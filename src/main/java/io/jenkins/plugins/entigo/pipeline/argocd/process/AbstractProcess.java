@@ -10,7 +10,7 @@ public abstract class AbstractProcess implements Process {
 
     private final StepContext context;
 
-    public AbstractProcess(StepContext context) {
+    protected AbstractProcess(StepContext context) {
         this.context = context;
     }
 

@@ -16,8 +16,8 @@ public class TimeoutExecution {
     private final AbstractProcess process;
     private final TaskListener listener;
     private final long end;
-    private transient ScheduledFuture<?> timeoutTask = null;
-    private transient Future<?> processTask = null;
+    private transient volatile ScheduledFuture<?> timeoutTask = null;
+    private transient volatile Future<?> processTask = null;
 
     public TimeoutExecution(AbstractProcess process, long timeout, TaskListener listener) {
         this.process = process;

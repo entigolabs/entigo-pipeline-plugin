@@ -119,13 +119,13 @@ public class ArgoCDClientImpl implements ArgoCDClient {
     }
 
     private <T> T doRequest(String method, String path, Class<T> responseType, Object request,
-                            Map<String, Object> uriParams, Map<String, Object> queryParams) throws ResponseException {
+                            Map<String, Object> uriParams, Map<String, Object> queryParams) {
         return doRequest(method, path, responseType, request, uriParams, queryParams, null);
     }
 
     private <T> T doRequest(String method, String path, Class<T> responseType, Object request,
                             Map<String, Object> uriParams, Map<String, Object> queryParams,
-                            Map<String, Object> properties) throws ResponseException {
+                            Map<String, Object> properties) {
         try {
             WebTarget target = apiTarget.path(path).resolveTemplates(uriParams);
             if (queryParams != null) {
