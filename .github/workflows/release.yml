@@ -22,6 +22,8 @@ jobs:
       run: ./mvnw install -q
     - name: Sonar 
       run: ./mvnw verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
     - name: Get version
       run: |
         VERSION=$( ./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout )
