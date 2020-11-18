@@ -8,6 +8,7 @@ public enum Sync {
 
     SYNCED("Synced"),
     OUT_OF_SYNC("OutOfSync"),
+    SYNC_FAILED("SyncFailed"),
     UNKNOWN("Unknown");
 
     private final String status;
