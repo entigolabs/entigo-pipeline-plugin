@@ -108,7 +108,7 @@ public class ArgoCDWaitProcess extends AbstractProcess {
         return chunkedInput;
     }
 
-    private void close() {
+    private synchronized void close() {
         if (input != null) {
             input.close();
         }

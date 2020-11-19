@@ -129,35 +129,48 @@ public class ArgoCDClientImpl implements ArgoCDClient {
                             Map<String, Object> properties) {
         try {
             WebTarget target = apiTarget.path(path).resolveTemplates(uriParams);
-            if (queryParams != null) {
-                for (Map.Entry<String, Object> queryParam : queryParams.entrySet()) {
-                    target = target.queryParam(queryParam.getKey(), queryParam.getValue());
-                }
-            }
-            if (properties != null) {
-                for (Map.Entry<String, Object> property : properties.entrySet()) {
-                    target.property(property.getKey(), property.getValue());
-                }
-            }
+            target = setQueryParams(target, queryParams);
+            setRequestProperties(target, properties);
             return target.request(MediaType.APPLICATION_JSON).method(method, Entity.json(request), responseType);
         } catch (WebApplicationException exception) {
-            Response response = exception.getResponse();
-            if (response != null && response.hasEntity()) {
-                try {
-                    ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-                    if (errorResponse.getCode() == 5) {
-                        throw new NotFoundException("Artifact was not found");
-                    }
-                    if (StringUtils.isNotEmpty(errorResponse.getError())) {
-                        throw new ResponseException(errorResponse.getError());
-                    }
-                } catch (ProcessingException readException) {
-                    // Failed to parse json entity, probably caused by wrong content-type
-                }
-            }
-            throw new ResponseException(exception.getMessage(), exception);
+            throw getResponseException(exception);
         } catch (ProcessingException exception) {
             throw new ResponseException(ProcessingExceptionUtil.getExceptionMessage(exception), exception);
         }
+    }
+
+    private WebTarget setQueryParams(WebTarget target, Map<String, Object> queryParams) {
+        if (queryParams != null) {
+            for (Map.Entry<String, Object> queryParam : queryParams.entrySet()) {
+                target = target.queryParam(queryParam.getKey(), queryParam.getValue());
+            }
+        }
+        return target;
+    }
+
+    private void setRequestProperties(WebTarget target, Map<String, Object> properties) {
+        if (properties != null) {
+            for (Map.Entry<String, Object> property : properties.entrySet()) {
+                target.property(property.getKey(), property.getValue());
+            }
+        }
+    }
+
+    private ResponseException getResponseException(WebApplicationException exception) {
+        Response response = exception.getResponse();
+        if (response != null && response.hasEntity()) {
+            try {
+                ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
+                if (errorResponse.getCode() == 5) {
+                    return new NotFoundException("Artifact was not found");
+                }
+                if (StringUtils.isNotEmpty(errorResponse.getError())) {
+                    return new ResponseException(errorResponse.getError());
+                }
+            } catch (ProcessingException readException) {
+                // Failed to parse json entity, probably caused by wrong content-type
+            }
+        }
+        return new ResponseException(exception.getMessage(), exception);
     }
 }
