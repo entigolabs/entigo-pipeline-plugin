@@ -85,13 +85,17 @@ Full example
 
 #### getArgoApp
 
-Gets information about the ArgoCD application. Currently, returns values for repoUrl, revision and path.
-
-Parameters:
+Gets information about the ArgoCD application. Parameters:
 
 * name - **Required**, name of the ArgoCD application.
 * projectName - Optional, name of the ArgoCD project.
 * connectionSelector - Overrides the ARGO_CD_SELECTOR env variable, value which is used to select a connection based on the configured connection matchers.
+
+Returned values:
+
+* repoUrl - ArgoCD application source repo URL
+* revision - ArgoCD application source target revision
+* path - ArgoCD application source path
 
 Minimal usage example
 
@@ -115,6 +119,8 @@ pipeline {
                     appInfo=getArgoApp name: 'application-name', connectionSelector: 'connection-name'
                 }
                 echo 'Application repoURL: ' + appinfo.repoUrl
+                echo 'Application target revision: ' + appinfo.revision
+                echo 'Application path: ' + appinfo.path
                 syncArgoApp name: 'application-name', connectionSelector: 'connection-name'
             }
         }
