@@ -57,4 +57,12 @@ public class ArgoCDService {
         return execution;
     }
 
+    public void deleteApplication(String applicationName, boolean cascade) throws AbortException {
+        try {
+            argoCDClient.deleteApplication(applicationName, cascade);
+        } catch (ResponseException exception) {
+            throw new AbortException("Failed to delete ArgoCD application, error: " + exception.getMessage());
+        }
+    }
+
 }
