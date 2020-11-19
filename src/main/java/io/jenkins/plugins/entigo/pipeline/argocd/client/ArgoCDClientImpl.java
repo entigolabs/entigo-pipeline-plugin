@@ -1,7 +1,6 @@
 package io.jenkins.plugins.entigo.pipeline.argocd.client;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.cli.NoCheckTrustManager;
 import io.jenkins.plugins.entigo.pipeline.argocd.model.*;
 import io.jenkins.plugins.entigo.pipeline.rest.*;

@@ -59,16 +59,16 @@ public class DeleteApplicationStep extends Step {
 
     @Override
     public StepExecution start(StepContext stepContext) {
-        return new GetApplicationStepExecution(stepContext, this);
+        return new DeleteApplicationStepExecution(stepContext, this);
     }
 
-    public static class GetApplicationStepExecution extends SynchronousStepExecution<Void> {
+    public static class DeleteApplicationStepExecution extends SynchronousStepExecution<Void> {
 
         private static final long serialVersionUID = 1;
 
         private final transient DeleteApplicationStep step;
 
-        protected GetApplicationStepExecution(@Nonnull StepContext context, DeleteApplicationStep step) {
+        protected DeleteApplicationStepExecution(@Nonnull StepContext context, DeleteApplicationStep step) {
             super(context);
             this.step = step;
         }
