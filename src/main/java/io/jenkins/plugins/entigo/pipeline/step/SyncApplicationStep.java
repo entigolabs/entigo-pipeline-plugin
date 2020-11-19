@@ -6,7 +6,7 @@ import hudson.Extension;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
-import org.apache.commons.lang.StringUtils;
+import io.jenkins.plugins.entigo.pipeline.util.FormValidationUtil;
 import org.jenkinsci.plugins.workflow.steps.*;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -19,7 +19,7 @@ import java.util.Set;
  * Author: Märt Erlenheim
  * Date: 2020-08-26
  */
-public class ApplicationSyncStep extends Step {
+public class SyncApplicationStep extends Step {
 
     private final String name;
     private Integer waitTimeout;
@@ -27,7 +27,7 @@ public class ApplicationSyncStep extends Step {
     private String connectionSelector;
 
     @DataBoundConstructor
-    public ApplicationSyncStep(@CheckForNull String name) {
+    public SyncApplicationStep(@CheckForNull String name) {
         this.name = name;
     }
 
@@ -64,7 +64,7 @@ public class ApplicationSyncStep extends Step {
 
     @Override
     public StepExecution start(StepContext stepContext) {
-        return new ApplicationSyncStepExecution(stepContext, this);
+        return new SyncApplicationStepExecution(stepContext, this);
     }
 
     @Extension
@@ -86,25 +86,11 @@ public class ApplicationSyncStep extends Step {
         }
 
         public FormValidation doCheckName(@QueryParameter String value) {
-            if (StringUtils.isBlank(value)) {
-                return FormValidation.error("Application name is required");
-            }
-            return FormValidation.ok();
+            return FormValidationUtil.doCheckRequiredField(value, "Application name is required");
         }
 
         public FormValidation doCheckWaitTimeout(@QueryParameter String value) {
-            if (StringUtils.isBlank(value)) {
-                return FormValidation.ok();
-            }
-            try {
-                long timeout = Long.parseLong(value);
-                if (timeout < 1L || timeout > 1800L) {
-                    return FormValidation.error("Timeout must be between 1 and 1800");
-                }
-            } catch (NumberFormatException exception) {
-                return FormValidation.error("Must be a positive number");
-            }
-            return FormValidation.ok();
+            return FormValidationUtil.doCheckTimeout(value, 1L, 1800L, false);
         }
     }
 }

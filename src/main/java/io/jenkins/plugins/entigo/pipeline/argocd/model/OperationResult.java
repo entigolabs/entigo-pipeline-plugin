@@ -6,11 +6,11 @@ import java.util.List;
  * Author: Märt Erlenheim
  * Date: 2020-09-01
  */
-// TODO Map V1alpha1ApplicationSource source from OpenApi
 public class OperationResult {
 
     private List<ResourceResult> resources;
     private String revision;
+    private ApplicationSource source;
 
     public List<ResourceResult> getResources() {
         return resources;
@@ -26,5 +26,13 @@ public class OperationResult {
 
     public void setRevision(String revision) {
         this.revision = revision;
+    }
+
+    public ApplicationSource getSource() {
+        return source;
+    }
+
+    public void setSource(ApplicationSource source) {
+        this.source = source;
     }
 }

@@ -3,14 +3,9 @@ package io.jenkins.plugins.entigo.pipeline.argocd.client;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.cli.NoCheckTrustManager;
-import io.jenkins.plugins.entigo.pipeline.argocd.model.ApplicationSyncRequest;
-import io.jenkins.plugins.entigo.pipeline.argocd.model.ErrorResponse;
-import io.jenkins.plugins.entigo.pipeline.argocd.model.UserInfo;
-import io.jenkins.plugins.entigo.pipeline.rest.Oauth2AuthenticationFilter;
-import io.jenkins.plugins.entigo.pipeline.rest.ResponseException;
+import io.jenkins.plugins.entigo.pipeline.argocd.model.*;
+import io.jenkins.plugins.entigo.pipeline.rest.*;
 import io.jenkins.plugins.entigo.pipeline.util.ProcessingExceptionUtil;
-import io.jenkins.plugins.entigo.pipeline.rest.ClientException;
-import io.jenkins.plugins.entigo.pipeline.rest.JacksonConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.glassfish.jersey.client.ClientProperties;
 
@@ -87,9 +82,15 @@ public class ArgoCDClientImpl implements ArgoCDClient {
     }
 
     @Override
-    public void syncApplication(String applicationName, ApplicationSyncRequest request) {
-        // Have to use Void response type or else jersey won't throw Not Found and Forbidden exceptions
-        postRequest("applications/{name}/sync", Void.class, request,
+    public Application getApplication(String applicationName, String projectName) {
+        Map<String, Object> queryParams = projectName == null ? null : Collections.singletonMap("project", projectName);
+        return getRequest("applications/{name}", Application.class,
+                Collections.singletonMap("name", applicationName), queryParams);
+    }
+
+    @Override
+    public Application syncApplication(String applicationName, ApplicationSyncRequest request) {
+        return postRequest("applications/{name}/sync", Application.class, request,
                 Collections.singletonMap("name", applicationName), null);
     }
 
@@ -128,32 +129,48 @@ public class ArgoCDClientImpl implements ArgoCDClient {
                             Map<String, Object> properties) {
         try {
             WebTarget target = apiTarget.path(path).resolveTemplates(uriParams);
-            if (queryParams != null) {
-                for (Map.Entry<String, Object> queryParam : queryParams.entrySet()) {
-                    target = target.queryParam(queryParam.getKey(), queryParam.getValue());
-                }
-            }
-            if (properties != null) {
-                for (Map.Entry<String, Object> property : properties.entrySet()) {
-                    target.property(property.getKey(), property.getValue());
-                }
-            }
+            target = setQueryParams(target, queryParams);
+            setRequestProperties(target, properties);
             return target.request(MediaType.APPLICATION_JSON).method(method, Entity.json(request), responseType);
         } catch (WebApplicationException exception) {
-            Response response = exception.getResponse();
-            if (response != null && response.hasEntity()) {
-                try {
-                    ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-                    if (StringUtils.isNotEmpty(errorResponse.getError())) {
-                        throw new ResponseException(errorResponse.getError());
-                    }
-                } catch (ProcessingException readException) {
-                    // Failed to parse json entity, probably caused by wrong content-type
-                }
-            }
-            throw new ResponseException(exception.getMessage(), exception);
+            throw getResponseException(exception);
         } catch (ProcessingException exception) {
             throw new ResponseException(ProcessingExceptionUtil.getExceptionMessage(exception), exception);
         }
+    }
+
+    private WebTarget setQueryParams(WebTarget target, Map<String, Object> queryParams) {
+        if (queryParams != null) {
+            for (Map.Entry<String, Object> queryParam : queryParams.entrySet()) {
+                target = target.queryParam(queryParam.getKey(), queryParam.getValue());
+            }
+        }
+        return target;
+    }
+
+    private void setRequestProperties(WebTarget target, Map<String, Object> properties) {
+        if (properties != null) {
+            for (Map.Entry<String, Object> property : properties.entrySet()) {
+                target.property(property.getKey(), property.getValue());
+            }
+        }
+    }
+
+    private ResponseException getResponseException(WebApplicationException exception) {
+        Response response = exception.getResponse();
+        if (response != null && response.hasEntity()) {
+            try {
+                ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
+                if (errorResponse.getCode() == 5) {
+                    return new NotFoundException("Artifact was not found");
+                }
+                if (StringUtils.isNotEmpty(errorResponse.getError())) {
+                    return new ResponseException(errorResponse.getError());
+                }
+            } catch (ProcessingException readException) {
+                // Failed to parse json entity, probably caused by wrong content-type
+            }
+        }
+        return new ResponseException(exception.getMessage(), exception);
     }
 }

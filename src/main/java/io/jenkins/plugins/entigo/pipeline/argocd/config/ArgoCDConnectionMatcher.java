@@ -6,6 +6,7 @@ import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.plugins.entigo.pipeline.PluginConfiguration;
+import io.jenkins.plugins.entigo.pipeline.util.FormValidationUtil;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -54,10 +55,7 @@ public class ArgoCDConnectionMatcher extends AbstractDescribableImpl<ArgoCDConne
     public static class DescriptorImpl extends Descriptor<ArgoCDConnectionMatcher> {
 
         public FormValidation doCheckPattern(@QueryParameter String value) {
-            if (StringUtils.isBlank(value)) {
-                return FormValidation.error("Pattern is required");
-            }
-            return FormValidation.ok();
+            return FormValidationUtil.doCheckRequiredField(value, "Pattern is required");
         }
 
         public FormValidation doCheckConnectionName(@QueryParameter String value) {

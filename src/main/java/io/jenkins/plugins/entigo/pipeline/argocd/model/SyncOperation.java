@@ -6,7 +6,6 @@ import java.util.List;
  * Author: Märt Erlenheim
  * Date: 2020-09-01
  */
-// TODO Map V1alpha1ApplicationSource source from OpenAPI
 public class SyncOperation {
 
     private Boolean dryRun;
@@ -14,6 +13,7 @@ public class SyncOperation {
     private Boolean prune;
     private List<SyncResource> resources;
     private String revision;
+    private ApplicationSource source;
     private List<String> syncOptions;
     private SyncStrategy syncStrategy;
 
@@ -55,6 +55,14 @@ public class SyncOperation {
 
     public void setRevision(String revision) {
         this.revision = revision;
+    }
+
+    public ApplicationSource getSource() {
+        return source;
+    }
+
+    public void setSource(ApplicationSource source) {
+        this.source = source;
     }
 
     public List<String> getSyncOptions() {
