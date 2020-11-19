@@ -23,10 +23,6 @@ public class ArgoCDService {
         this.argoCDClient = argoCDClient;
     }
 
-    public Application getApplication(String applicationName) throws AbortException {
-        return getApplication(applicationName, null);
-    }
-
     public Application getApplication(String applicationName, String projectName) throws AbortException {
         try {
             return argoCDClient.getApplication(applicationName, projectName);
@@ -38,7 +34,7 @@ public class ArgoCDService {
     }
 
     public void syncApplication(TaskListener listener, String applicationName) throws AbortException {
-        listener.getLogger().println("Syncing ArgoCD application...");
+        ListenerUtil.println(listener, "Syncing ArgoCD application...");
         SyncStrategy syncStrategy = new SyncStrategy();
         syncStrategy.setApply(new SyncStrategyApply(true));
         ApplicationSyncRequest syncRequest = new ApplicationSyncRequest();

@@ -83,6 +83,24 @@ Full example
 
 ```syncArgoApp wait: true, name: 'application-name', waitTimeout: 600, connectionSelector: 'selector-value'```
 
+#### getArgoApp
+
+Gets information about the ArgoCD application. Currently, returns values for repoUrl, revision and path.
+
+Parameters:
+
+* name - **Required**, name of the ArgoCD application.
+* projectName - Optional, name of the ArgoCD project.
+* connectionSelector - Overrides the ARGO_CD_SELECTOR env variable, value which is used to select a connection based on the configured connection matchers.
+
+Minimal usage example
+
+```getArgoApp 'application-name'```
+
+Full example
+
+```getArgoApp connectionSelector: 'selector-value', name: 'application-name', projectName: 'project-name'```
+
 ### ArgoCD Working example
 
 When creating a connection in the configuration, don't uncheck the matcher generation. Replace the connection-name value with the name of a pre-configured connection and application-name with the name of the ArgoCD application to synchronize.
@@ -93,6 +111,10 @@ pipeline {
     stages {
         stage('ArgoCD sync') {
             steps {
+                script {
+                    appInfo=getArgoApp name: 'application-name', connectionSelector: 'connection-name'
+                }
+                echo 'Application repoURL: ' + appinfo.repoUrl
                 syncArgoApp name: 'application-name', connectionSelector: 'connection-name'
             }
         }

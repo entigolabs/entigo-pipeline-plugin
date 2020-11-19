@@ -19,7 +19,7 @@ import java.util.Set;
  * Author: Märt Erlenheim
  * Date: 2020-08-26
  */
-public class ApplicationSyncStep extends Step {
+public class SyncApplicationStep extends Step {
 
     private final String name;
     private Integer waitTimeout;
@@ -27,7 +27,7 @@ public class ApplicationSyncStep extends Step {
     private String connectionSelector;
 
     @DataBoundConstructor
-    public ApplicationSyncStep(@CheckForNull String name) {
+    public SyncApplicationStep(@CheckForNull String name) {
         this.name = name;
     }
 
@@ -64,7 +64,7 @@ public class ApplicationSyncStep extends Step {
 
     @Override
     public StepExecution start(StepContext stepContext) {
-        return new ApplicationSyncStepExecution(stepContext, this);
+        return new SyncApplicationStepExecution(stepContext, this);
     }
 
     @Extension

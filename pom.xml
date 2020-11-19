@@ -50,7 +50,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials</artifactId>
-            <version>2.3.13</version>
+            <version>2.3.12</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -61,11 +61,6 @@
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-step-api</artifactId>
             <version>2.22</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>git-client</artifactId>
-            <version>3.4.2</version>
         </dependency>
         <!-- REST client dependencies !-->
         <dependency>
@@ -104,19 +99,4 @@
             <url>https://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
-
-    <!-- Trying to avoid java.lang.LinkageError: ClassCastException caused by loading Jakarta with the plugin first !-->
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.jenkins-ci.tools</groupId>
-                <artifactId>maven-hpi-plugin</artifactId>
-                <configuration>
-                    <pluginFirstClassLoader>true</pluginFirstClassLoader>
-                    <!-- Required parameter !-->
-                    <minimumJavaVersion>8</minimumJavaVersion>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>
