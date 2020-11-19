@@ -22,7 +22,7 @@
 
     <groupId>io.jenkins.plugins</groupId>
     <artifactId>entigo-pipeline</artifactId>
-    <version>0.2.0-snapshot</version>
+    <version>0.2.1-snapshot</version>
     <name>Entigo Pipeline</name>
     <description>Jenkins plugin for building CI/CD pipelines on top of Kubernetes and ArgoCD.</description>
     <packaging>hpi</packaging>

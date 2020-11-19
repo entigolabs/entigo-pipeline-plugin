@@ -126,6 +126,14 @@ Full example
 
 ```deleteArgoApp cascade: true, connectionSelector: 'selector-value', name: 'application-name'```
 
+#### listArgoConnections
+
+Lists the configured connection names from the Global Configuration.
+
+Usage example
+
+```listArgoConnections()```
+
 ### ArgoCD Working example
 
 When creating a connection in the configuration, don't uncheck the matcher generation. Replace the connection-name value with the name of a pre-configured connection and application-name with the name of the ArgoCD application to synchronize.
