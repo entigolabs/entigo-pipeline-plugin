@@ -86,10 +86,10 @@ public class GetApplicationStep extends Step {
             ListenerUtil.println(listener, "Using ArgoCD connection: " + connection.getName());
             ArgoCDService argoCDService = new ArgoCDService(connection.getClient());
             Application application = argoCDService.getApplication(step.getName(), step.getProjectName());
-            return getApplicationInfo(application);
+            return getApplicationInfo(application, connection);
         }
 
-        private Map<String, String> getApplicationInfo(Application application) {
+        private Map<String, String> getApplicationInfo(Application application, ArgoCDConnection connection) {
             if (application == null) {
                 return null;
             } else {
@@ -98,6 +98,7 @@ public class GetApplicationStep extends Step {
                 appInfo.put("repoUrl", source.getRepoURL());
                 appInfo.put("revision", source.getTargetRevision());
                 appInfo.put("path", source.getPath());
+                appInfo.put("connectionName", connection.getName());
                 return appInfo;
             }
         }

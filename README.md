@@ -100,6 +100,7 @@ Returned values:
 * repoUrl - ArgoCD application source repo URL
 * revision - ArgoCD application source target revision
 * path - ArgoCD application source path
+* connectionName - name of the ArgoCD connection that was used
 
 Minimal usage example
 
