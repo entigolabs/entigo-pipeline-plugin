@@ -16,6 +16,10 @@ The goal of this project is to provide easy to use tools for setting up a softwa
 
 This plugin is still in active development and more functionality will be implemented soon.
 
+## Installation
+
+The released .hpi file can be installed into Jenkins by using the "Upload Plugin" option found under Manage Jenkins -> Plugin Manager -> Advanced
+
 ## ArgoCD Integration
 
 Before using any build steps
