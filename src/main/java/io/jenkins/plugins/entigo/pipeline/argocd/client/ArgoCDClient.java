@@ -20,5 +20,7 @@ public interface ArgoCDClient {
 
     Response watchApplication(String applicationName, Integer readTimeout);
 
+    void deleteApplication(String applicationName, boolean cascade);
+
     void close();
 }

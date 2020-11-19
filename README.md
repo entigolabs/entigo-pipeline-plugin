@@ -110,6 +110,22 @@ Full example
 
 ```getArgoApp connectionSelector: 'selector-value', name: 'application-name', projectName: 'project-name'```
 
+#### deleteArgoApp
+
+Deletes ArgoCD application. Parameters:
+
+* name - **Required**, name of the ArgoCD application.
+* cascade - Optional, perform a cascaded deletion of all application resources. Default **true**.
+* connectionSelector - Overrides the ARGO_CD_SELECTOR env variable, value which is used to select a connection based on the configured connection matchers.
+
+Minimal usage example
+
+```deleteArgoApp 'application-name'```
+
+Full example
+
+```deleteArgoApp cascade: true, connectionSelector: 'selector-value', name: 'application-name'```
+
 ### ArgoCD Working example
 
 When creating a connection in the configuration, don't uncheck the matcher generation. Replace the connection-name value with the name of a pre-configured connection and application-name with the name of the ArgoCD application to synchronize.

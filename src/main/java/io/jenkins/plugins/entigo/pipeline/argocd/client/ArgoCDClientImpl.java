@@ -95,7 +95,6 @@ public class ArgoCDClientImpl implements ArgoCDClient {
     }
 
     @Override
-    @NonNull
     public Response watchApplication(String applicationName, Integer readTimeout) {
         Map<String, Object> properties = new HashMap<>();
         if (readTimeout != null && readTimeout > 0) {
@@ -103,6 +102,12 @@ public class ArgoCDClientImpl implements ArgoCDClient {
         }
         return doRequest(HttpMethod.GET, "stream/applications", Response.class, null, Collections.emptyMap(),
                 Collections.singletonMap("name", applicationName), properties);
+    }
+
+    @Override
+    public void deleteApplication(String applicationName, boolean cascade) {
+        doRequest(HttpMethod.DELETE, "applications/{name}", Void.class, null,
+                Collections.singletonMap("name", applicationName), Collections.singletonMap("cascade", cascade));
     }
 
     private <T> T getRequest(String path, Class<T> responseType) {
