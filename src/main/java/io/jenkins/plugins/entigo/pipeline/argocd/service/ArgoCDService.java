@@ -48,11 +48,12 @@ public class ArgoCDService {
         }
     }
 
-    public TimeoutExecution waitApplicationStatus(String applicationName, Long timeout, StepContext context,
-                                                  TaskListener listener) {
+    public TimeoutExecution waitApplicationStatus(String applicationName, Long timeout, boolean waitFailure,
+                                                  StepContext context, TaskListener listener) {
         ListenerUtil.println(listener, "Waiting for application to sync, timeout is " + timeout + " seconds");
         ArgoCDWaitProcess process = new ArgoCDWaitProcess(context, listener, argoCDClient, applicationName);
         TimeoutExecution execution = new TimeoutExecution(process, timeout, listener);
+        execution.setWaitFailure(waitFailure);
         execution.start();
         return execution;
     }

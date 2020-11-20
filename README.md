@@ -75,8 +75,9 @@ options {
 Sends application sync request to ArgoCD. Parameters:
 
 * name - **Required**, name of the ArgoCD application.
-* wait - Wait for application sync to complete. Default true.
+* wait - Wait for application sync to complete. Default **true**.
 * waitTimeout - Overrides Global configuration. View App wait timeout from ArgoCD configuration section.
+* waitFailure - Fail the build when waiting for the sync to complete exceeds the timeout. Default **true**.
 * connectionSelector - Overrides the ARGO_CD_SELECTOR env variable, value which is used to select a connection based on the configured connection matchers.
 
 Minimal usage example
@@ -133,6 +134,18 @@ Lists the configured connection names from the Global Configuration.
 Usage example
 
 ```listArgoConnections()```
+
+Example use case
+
+```
+def destinations = listArgoConnections()
+pipeline {
+  parameters {
+      choice(name: 'dstenv', choices: destinations)
+  }
+...
+}
+```
 
 ### ArgoCD Working example
 
