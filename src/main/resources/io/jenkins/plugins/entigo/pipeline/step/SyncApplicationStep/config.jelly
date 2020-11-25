@@ -11,6 +11,9 @@
         <f:entry field="wait" title="${%Wait for sync to complete}">
             <f:checkbox default="true"/>
         </f:entry>
+        <f:entry field="waitFailure" title="${%Fail the build when exceeding timeout}">
+            <f:checkbox default="true"/>
+        </f:entry>
         <f:entry field="waitTimeout" title="${%ArgoCD action wait timeout}">
             <f:number />
         </f:entry>

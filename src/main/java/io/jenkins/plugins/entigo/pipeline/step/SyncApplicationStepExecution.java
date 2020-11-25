@@ -56,7 +56,8 @@ public class SyncApplicationStepExecution extends AbstractStepExecutionImpl {
     private synchronized void waitApplicationSync(TaskListener listener, ArgoCDConnection connection,
                                                   ArgoCDService argoCDService) {
         Long timeout = step.getWaitTimeout() == null ? connection.getAppWaitTimeout() : Long.valueOf(step.getWaitTimeout());
-        this.waitExecution = argoCDService.waitApplicationStatus(step.getName(), timeout, getContext(), listener);
+        this.waitExecution = argoCDService.waitApplicationStatus(step.getName(), timeout, step.isWaitFailure(),
+                getContext(), listener);
     }
 
     @Override

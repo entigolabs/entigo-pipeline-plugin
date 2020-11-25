@@ -24,6 +24,7 @@ public class SyncApplicationStep extends Step {
     private final String name;
     private Integer waitTimeout;
     private boolean wait = true;
+    private boolean waitFailure = true;
     private String connectionSelector;
 
     @DataBoundConstructor
@@ -51,6 +52,15 @@ public class SyncApplicationStep extends Step {
 
     public Integer getWaitTimeout() {
         return waitTimeout;
+    }
+
+    public boolean isWaitFailure() {
+        return waitFailure;
+    }
+
+    @DataBoundSetter
+    public void setWaitFailure(boolean waitFailure) {
+        this.waitFailure = waitFailure;
     }
 
     @DataBoundSetter

@@ -16,6 +16,7 @@ public class TimeoutExecution {
     private final AbstractProcess process;
     private final TaskListener listener;
     private final long end;
+    private boolean waitFailure = true;
     private transient ScheduledFuture<?> timeoutTask = null;
     private transient Future<?> processTask = null;
 
@@ -25,13 +26,22 @@ public class TimeoutExecution {
         end = System.currentTimeMillis() + (timeout * 1000);
     }
 
+    public void setWaitFailure(boolean waitFailure) {
+        this.waitFailure = waitFailure;
+    }
+
     public void start() {
         long delay = end - System.currentTimeMillis();
         if (delay > 0) {
             timeoutTask = Timer.get().schedule(() -> {
                 ListenerUtil.error(listener, "Process timed out, stopping the process");
                 stop();
-                process.failure(new AbortException("Process timed out"));
+                if (waitFailure) {
+                    process.failure(new AbortException("Process timed out"));
+                } else {
+                    ListenerUtil.error(listener, "waitFailure was False, continuing build");
+                    process.success(null);
+                }
             }, delay, TimeUnit.MILLISECONDS);
             processTask = Timer.get().submit(() -> {
                 try {
