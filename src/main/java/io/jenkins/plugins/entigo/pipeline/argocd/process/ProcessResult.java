@@ -1,5 +1,7 @@
 package io.jenkins.plugins.entigo.pipeline.argocd.process;
 
+import hudson.AbortException;
+
 /**
  * Author: Märt Erlenheim
  * Date: 2020-11-26
@@ -28,20 +30,20 @@ public class ProcessResult<T> {
         return new ProcessResult<>(null, null, false);
     }
 
-    public T get() throws Exception {
+    public T get() throws AbortException, ProcessException {
         if (finished) {
             if (exception == null) {
                 return value;
             } else {
-                throw exception;
+                if (exception instanceof AbortException) {
+                    throw (AbortException) exception;
+                } else {
+                    throw new ProcessException(exception.getMessage(), exception);
+                }
             }
         } else {
             throw new IllegalStateException("Process didn't finish");
         }
-    }
-
-    public Exception getException() {
-        return exception;
     }
 
     public boolean isSuccessful() {

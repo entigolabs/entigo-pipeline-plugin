@@ -8,6 +8,8 @@ import java.io.IOException;
  */
 public class ClientException extends IOException {
 
+    private static final long serialVersionUID = 1916610580737297383L;
+
     public ClientException(String message) {
         super(message);
     }

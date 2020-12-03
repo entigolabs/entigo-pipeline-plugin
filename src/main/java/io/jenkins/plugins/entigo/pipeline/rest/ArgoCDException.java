@@ -6,6 +6,7 @@ package io.jenkins.plugins.entigo.pipeline.rest;
  */
 public class ArgoCDException extends ResponseException{
 
+    private static final long serialVersionUID = -5272110886562423271L;
     private final Integer code;
 
     public ArgoCDException(String message, Integer code) {

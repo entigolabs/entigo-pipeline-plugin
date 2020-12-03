@@ -22,7 +22,7 @@ public abstract class RequestStepExecution<T> extends SynchronousNonBlockingStep
     private static final long serialVersionUID = 1;
 
     private final transient RequestStep step;
-    private transient ArgoCDConnection connection = null;
+    private transient ArgoCDConnection argoCDConnection = null;
     private transient ArgoCDService argoCDService = null;
 
     protected RequestStepExecution(@Nonnull StepContext context, RequestStep step) {
@@ -30,17 +30,17 @@ public abstract class RequestStepExecution<T> extends SynchronousNonBlockingStep
         this.step = step;
     }
 
-    protected ArgoCDConnection getConnection() throws IOException, InterruptedException {
-        if (this.connection == null) {
-            this.connection = ArgoCDConnectionsProperty.getConnection(getContext().get(Run.class),
+    protected ArgoCDConnection getArgoCDConnection() throws IOException, InterruptedException {
+        if (this.argoCDConnection == null) {
+            this.argoCDConnection = ArgoCDConnectionsProperty.getConnection(getContext().get(Run.class),
                     getContext().get(EnvVars.class), step.getConnectionSelector());
         }
-        return this.connection;
+        return this.argoCDConnection;
     }
 
     protected ArgoCDService getArgoCDService() throws IOException, InterruptedException {
         if (this.argoCDService == null) {
-            ArgoCDConnection connection = getConnection();
+            ArgoCDConnection connection = getArgoCDConnection();
             TaskListener listener = getContext().get(TaskListener.class);
             ListenerUtil.println(listener, "Using ArgoCD connection: " + connection.getName());
             Long timeout = step.getWaitTimeout() == null ? connection.getAppWaitTimeout() : Long.valueOf(step.getWaitTimeout());

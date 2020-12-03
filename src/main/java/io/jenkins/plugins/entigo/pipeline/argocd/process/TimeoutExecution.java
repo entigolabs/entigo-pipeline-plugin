@@ -23,7 +23,7 @@ public class TimeoutExecution<T> {
         end = System.currentTimeMillis() + (timeout * 1000);
     }
 
-    public ProcessResult<T> run() {
+    public ProcessResult<T> run() throws TimeoutException {
         long delay = end - System.currentTimeMillis();
         if (delay > 0) {
             try {
@@ -36,7 +36,7 @@ public class TimeoutExecution<T> {
             } catch (TimeoutException exception) {
                 ListenerUtil.error(listener, "Process timed out, stopping the process");
                 stop();
-                return ProcessResult.failure(exception);
+                throw exception;
             }
         } else {
             stop();

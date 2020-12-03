@@ -6,6 +6,8 @@ package io.jenkins.plugins.entigo.pipeline.rest;
  */
 public class RetryableException extends ResponseException {
 
+    private static final long serialVersionUID = -7159171352579378158L;
+
     public RetryableException(String message) {
         super(message);
     }

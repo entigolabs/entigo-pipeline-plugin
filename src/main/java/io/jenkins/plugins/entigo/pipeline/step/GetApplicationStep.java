@@ -68,7 +68,7 @@ public class GetApplicationStep extends RequestStep {
         @Override
         protected Map<String, String> run() throws Exception {
             Application application = getArgoCDService().getApplication(step.getName(), step.getProjectName());
-            return getApplicationInfo(application, getConnection());
+            return getApplicationInfo(application, getArgoCDConnection());
         }
 
         private Map<String, String> getApplicationInfo(Application application, ArgoCDConnection connection) {
