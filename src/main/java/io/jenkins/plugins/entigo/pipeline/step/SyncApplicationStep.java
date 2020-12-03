@@ -19,13 +19,11 @@ import java.util.Set;
  * Author: Märt Erlenheim
  * Date: 2020-08-26
  */
-public class SyncApplicationStep extends Step {
+public class SyncApplicationStep extends RequestStep {
 
     private final String name;
-    private Integer waitTimeout;
     private boolean wait = true;
     private boolean waitFailure = true;
-    private String connectionSelector;
 
     @DataBoundConstructor
     public SyncApplicationStep(@CheckForNull String name) {
@@ -45,15 +43,6 @@ public class SyncApplicationStep extends Step {
         return wait;
     }
 
-    @DataBoundSetter
-    public void setWaitTimeout(Integer waitTimeout) {
-        this.waitTimeout = waitTimeout;
-    }
-
-    public Integer getWaitTimeout() {
-        return waitTimeout;
-    }
-
     public boolean isWaitFailure() {
         return waitFailure;
     }
@@ -63,22 +52,13 @@ public class SyncApplicationStep extends Step {
         this.waitFailure = waitFailure;
     }
 
-    @DataBoundSetter
-    public void setConnectionSelector(String connectionSelector) {
-        this.connectionSelector = connectionSelector;
-    }
-
-    public String getConnectionSelector() {
-        return connectionSelector;
-    }
-
     @Override
     public StepExecution start(StepContext stepContext) {
         return new SyncApplicationStepExecution(stepContext, this);
     }
 
     @Extension
-    public static class DescriptorImpl extends StepDescriptor {
+    public static class DescriptorImpl extends RequestStepDescriptor {
 
         @Override
         public String getDisplayName() {
@@ -97,10 +77,6 @@ public class SyncApplicationStep extends Step {
 
         public FormValidation doCheckName(@QueryParameter String value) {
             return FormValidationUtil.doCheckRequiredField(value, "Application name is required");
-        }
-
-        public FormValidation doCheckWaitTimeout(@QueryParameter String value) {
-            return FormValidationUtil.doCheckTimeout(value, 1L, 1800L, false);
         }
     }
 }

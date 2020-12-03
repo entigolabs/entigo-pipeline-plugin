@@ -37,7 +37,7 @@ Before using any build steps
     * Host uri - has to include http or https scheme and not include the api path.
     * Credentials - Jenkins Credential with Secret text type and with a value of ArgoCD user authentication token.
     * Ignore ArgoCD SSL Certificate Errors disables all SSL errors and enables insecure connections.
-    * App wait timeout - in seconds for how long ArgoCD commands will wait for application actions, fails the build if timeout is exceeded.
+    * App wait timeout - in seconds for how long ArgoCD step will wait for application requests to finish, fails the build if timeout is exceeded.
     * Generate a name based matcher - after applying the changes, it will automatically generate a matcher that has a pattern that strictly matches the connection name.
 * Default ArgoCD connection - default connection to use when neither step nor env variable specify a selector for choosing a connection.
 * Connection matchers
@@ -95,6 +95,7 @@ Gets information about the ArgoCD application. Parameters:
 * name - **Required**, name of the ArgoCD application.
 * projectName - Optional, name of the ArgoCD project.
 * connectionSelector - Overrides the ARGO_CD_SELECTOR env variable, value which is used to select a connection based on the configured connection matchers.
+* waitTimeout - Overrides Global configuration. View App wait timeout from ArgoCD configuration section.
 
 Returned values:
 
@@ -118,6 +119,7 @@ Deletes ArgoCD application. Parameters:
 * name - **Required**, name of the ArgoCD application.
 * cascade - Optional, perform a cascaded deletion of all application resources. Default **true**.
 * connectionSelector - Overrides the ARGO_CD_SELECTOR env variable, value which is used to select a connection based on the configured connection matchers.
+* waitTimeout - Overrides Global configuration. View App wait timeout from ArgoCD configuration section.
 
 Minimal usage example
 

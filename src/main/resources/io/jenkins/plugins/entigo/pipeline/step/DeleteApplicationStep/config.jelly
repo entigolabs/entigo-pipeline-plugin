@@ -11,5 +11,8 @@
         <f:entry field="connectionSelector" title="${%ArgoCD Connection selector}">
             <f:textbox/>
         </f:entry>
+        <f:entry field="waitTimeout" title="${%ArgoCD request timeout}">
+            <f:number />
+        </f:entry>
     </f:block>
 </j:jelly>

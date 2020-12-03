@@ -4,12 +4,11 @@ import hudson.AbortException;
 import hudson.model.TaskListener;
 import io.jenkins.plugins.entigo.pipeline.argocd.client.ArgoCDClient;
 import io.jenkins.plugins.entigo.pipeline.argocd.model.*;
-import io.jenkins.plugins.entigo.pipeline.argocd.process.ArgoCDWaitProcess;
-import io.jenkins.plugins.entigo.pipeline.rest.NotFoundException;
-import io.jenkins.plugins.entigo.pipeline.rest.ResponseException;
-import io.jenkins.plugins.entigo.pipeline.argocd.process.TimeoutExecution;
+import io.jenkins.plugins.entigo.pipeline.argocd.process.*;
+import io.jenkins.plugins.entigo.pipeline.argocd.process.Process;
 import io.jenkins.plugins.entigo.pipeline.util.ListenerUtil;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
+
+import java.util.concurrent.TimeoutException;
 
 /**
  * Author: Märt Erlenheim
@@ -18,51 +17,86 @@ import org.jenkinsci.plugins.workflow.steps.StepContext;
 public class ArgoCDService {
 
     private final ArgoCDClient argoCDClient;
+    private final TaskListener listener;
+    private final long timeout;
+    private volatile TimeoutExecution<?> processExecution = null;
 
-    public ArgoCDService(ArgoCDClient argoCDClient) {
+    public ArgoCDService(ArgoCDClient argoCDClient, TaskListener listener, long timeout) {
         this.argoCDClient = argoCDClient;
+        this.listener = listener;
+        this.timeout = timeout;
     }
 
-    public Application getApplication(String applicationName, String projectName) throws AbortException {
-        try {
-            return argoCDClient.getApplication(applicationName, projectName);
-        } catch (NotFoundException exception) {
-            return null;
-        } catch (ResponseException exception) {
-            throw new AbortException("Failed to get ArgoCD application, error: " + exception.getMessage());
-        }
+    public Application getApplication(String applicationName, String projectName) throws Exception {
+        ListenerUtil.println(listener, String.format("Getting ArgoCD application %s, timeout: %d seconds",
+                applicationName, timeout));
+        GetApplicationProcess process = new GetApplicationProcess(listener, argoCDClient, applicationName, projectName);
+        return (Application) getResult(process);
     }
 
-    public void syncApplication(TaskListener listener, String applicationName) throws AbortException {
-        ListenerUtil.println(listener, "Syncing ArgoCD application...");
+    public void syncApplication(String applicationName) throws Exception {
+        ListenerUtil.println(listener, String.format("Syncing ArgoCD application %s, timeout: %d seconds",
+                applicationName, timeout));
+        SyncApplicationProcess process = new SyncApplicationProcess(listener, argoCDClient, applicationName,
+                createSyncRequest(applicationName));
+        getResult(process);
+    }
+
+    private ApplicationSyncRequest createSyncRequest(String applicationName) {
         SyncStrategy syncStrategy = new SyncStrategy();
         syncStrategy.setApply(new SyncStrategyApply(true));
         ApplicationSyncRequest syncRequest = new ApplicationSyncRequest();
         syncRequest.setName(applicationName);
         syncRequest.setPrune(true);
         syncRequest.setStrategy(syncStrategy);
-        try {
-            argoCDClient.syncApplication(applicationName, syncRequest);
-        } catch (ResponseException exception) {
-            throw new AbortException("Sync request to ArgoCD failed, error: " + exception.getMessage());
+        return syncRequest;
+    }
+
+    public void waitApplicationStatus(String applicationName, boolean waitFailure) throws Exception {
+        ListenerUtil.println(listener, "Waiting for application to sync, timeout: " + timeout + " seconds");
+        WaitApplicationProcess process = new WaitApplicationProcess(this.listener, argoCDClient, applicationName);
+        this.processExecution = new TimeoutExecution<>(this.listener, process, this.timeout);
+        ProcessResult<?> waitResult = this.processExecution.run();
+        if (waitResult.notSuccessful()) {
+            Exception exception = waitResult.getException();
+            if (exception instanceof TimeoutException) {
+                if (waitFailure) {
+                    throw new AbortException("Process timed out");
+                } else {
+                    ListenerUtil.println(listener, "waitFailure was False, continuing build");
+                }
+            } else {
+                throw exception;
+            }
         }
     }
 
-    public TimeoutExecution waitApplicationStatus(String applicationName, Long timeout, boolean waitFailure,
-                                                  StepContext context, TaskListener listener) {
-        ListenerUtil.println(listener, "Waiting for application to sync, timeout is " + timeout + " seconds");
-        ArgoCDWaitProcess process = new ArgoCDWaitProcess(context, listener, argoCDClient, applicationName);
-        TimeoutExecution execution = new TimeoutExecution(process, timeout, listener);
-        execution.setWaitFailure(waitFailure);
-        execution.start();
-        return execution;
+    public void deleteApplication(String applicationName, boolean cascade) throws Exception {
+        ListenerUtil.println(listener, String.format("Deleting ArgoCD application %s, cascade: %s, timeout: %d seconds",
+                applicationName, cascade, timeout));
+        DeleteApplicationProcess process = new DeleteApplicationProcess(listener, argoCDClient, applicationName,
+                cascade);
+        getResult(process);
     }
 
-    public void deleteApplication(String applicationName, boolean cascade) throws AbortException {
-        try {
-            argoCDClient.deleteApplication(applicationName, cascade);
-        } catch (ResponseException exception) {
-            throw new AbortException("Failed to delete ArgoCD application, error: " + exception.getMessage());
+    private <T> Object getResult(Process<T> process) throws Exception {
+        this.processExecution = new TimeoutExecution<>(this.listener, process, this.timeout);
+        ProcessResult<?> result = this.processExecution.run();
+        if (result.notSuccessful()) {
+            Exception exception = result.getException();
+            if (exception instanceof TimeoutException) {
+                throw new AbortException("Process timed out");
+            } else {
+                throw exception;
+            }
+        } else {
+            return result.get();
+        }
+    }
+
+    public void stop() {
+        if (this.processExecution != null) {
+            this.processExecution.stop();
         }
     }
 

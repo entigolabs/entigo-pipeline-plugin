@@ -7,12 +7,9 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import io.jenkins.plugins.entigo.pipeline.argocd.config.ArgoCDConnection;
-import io.jenkins.plugins.entigo.pipeline.argocd.config.ArgoCDConnectionsProperty;
 import io.jenkins.plugins.entigo.pipeline.argocd.model.Application;
 import io.jenkins.plugins.entigo.pipeline.argocd.model.ApplicationSource;
-import io.jenkins.plugins.entigo.pipeline.argocd.service.ArgoCDService;
 import io.jenkins.plugins.entigo.pipeline.util.FormValidationUtil;
-import io.jenkins.plugins.entigo.pipeline.util.ListenerUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.steps.*;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -29,11 +26,10 @@ import java.util.Set;
  * Author: Märt Erlenheim
  * Date: 2020-11-18
  */
-public class GetApplicationStep extends Step {
+public class GetApplicationStep extends RequestStep {
 
     private final String name;
     private String projectName;
-    private String connectionSelector;
 
     @DataBoundConstructor
     public GetApplicationStep(@CheckForNull String name) {
@@ -53,41 +49,26 @@ public class GetApplicationStep extends Step {
         return projectName;
     }
 
-    @DataBoundSetter
-    public void setConnectionSelector(String connectionSelector) {
-        this.connectionSelector = connectionSelector;
-    }
-
-    public String getConnectionSelector() {
-        return connectionSelector;
-    }
-
     @Override
     public StepExecution start(StepContext stepContext) {
         return new GetApplicationStepExecution(stepContext, this);
     }
 
-    public static class GetApplicationStepExecution extends SynchronousStepExecution<Map<String, String>> {
+    public static class GetApplicationStepExecution extends RequestStepExecution<Map<String, String>> {
 
         private static final long serialVersionUID = 1;
 
         private final transient GetApplicationStep step;
 
         protected GetApplicationStepExecution(@Nonnull StepContext context, GetApplicationStep step) {
-            super(context);
+            super(context, step);
             this.step = step;
         }
 
         @Override
         protected Map<String, String> run() throws Exception {
-            TaskListener listener = getContext().get(TaskListener.class);
-            ArgoCDConnection connection = ArgoCDConnectionsProperty.getConnection(getContext().get(Run.class),
-                    getContext().get(EnvVars.class), step.getConnectionSelector());
-            ListenerUtil.println(listener, "Using ArgoCD connection: " + connection.getName());
-            ArgoCDService argoCDService = new ArgoCDService(connection.getClient());
-            ListenerUtil.println(listener, "Getting ArgoCD application: " + step.getName());
-            Application application = argoCDService.getApplication(step.getName(), step.getProjectName());
-            return getApplicationInfo(application, connection);
+            Application application = getArgoCDService().getApplication(step.getName(), step.getProjectName());
+            return getApplicationInfo(application, getConnection());
         }
 
         private Map<String, String> getApplicationInfo(Application application, ArgoCDConnection connection) {
@@ -106,7 +87,7 @@ public class GetApplicationStep extends Step {
     }
 
     @Extension
-    public static class DescriptorImpl extends StepDescriptor {
+    public static class DescriptorImpl extends RequestStepDescriptor {
 
         @Nonnull
         @Override
