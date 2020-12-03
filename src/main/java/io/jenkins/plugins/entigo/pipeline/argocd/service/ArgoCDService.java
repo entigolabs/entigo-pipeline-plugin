@@ -9,6 +9,8 @@ import io.jenkins.plugins.entigo.pipeline.argocd.process.Process;
 import io.jenkins.plugins.entigo.pipeline.util.ListenerUtil;
 
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Author: Märt Erlenheim
@@ -19,7 +21,8 @@ public class ArgoCDService {
     private final ArgoCDClient argoCDClient;
     private final TaskListener listener;
     private final long timeout;
-    private volatile TimeoutExecution<?> processExecution = null;
+    private final Lock lock = new ReentrantLock();
+    private TimeoutExecution<?> processExecution = null;
 
     public ArgoCDService(ArgoCDClient argoCDClient, TaskListener listener, long timeout) {
         this.argoCDClient = argoCDClient;
@@ -32,7 +35,7 @@ public class ArgoCDService {
         ListenerUtil.println(listener, String.format("Getting ArgoCD application %s, timeout: %d seconds",
                 applicationName, timeout));
         GetApplicationProcess process = new GetApplicationProcess(listener, argoCDClient, applicationName, projectName);
-        return (Application) getResult(process);
+        return (Application) getResultTimeoutAborts(process);
     }
 
     public void syncApplication(String applicationName) throws AbortException, ProcessException {
@@ -40,7 +43,7 @@ public class ArgoCDService {
                 applicationName, timeout));
         SyncApplicationProcess process = new SyncApplicationProcess(listener, argoCDClient, applicationName,
                 createSyncRequest(applicationName));
-        getResult(process);
+        getResultTimeoutAborts(process);
     }
 
     private ApplicationSyncRequest createSyncRequest(String applicationName) {
@@ -57,10 +60,8 @@ public class ArgoCDService {
             ProcessException {
         ListenerUtil.println(listener, "Waiting for application to sync, timeout: " + timeout + " seconds");
         WaitApplicationProcess process = new WaitApplicationProcess(this.listener, argoCDClient, applicationName);
-        this.processExecution = new TimeoutExecution<>(this.listener, process, this.timeout);
         try {
-            ProcessResult<?> waitResult = this.processExecution.run();
-            waitResult.get();
+            getResult(process);
         } catch (TimeoutException exception) {
             if (waitFailure) {
                 throw new AbortException("Process timed out");
@@ -75,14 +76,27 @@ public class ArgoCDService {
                 applicationName, cascade, timeout));
         DeleteApplicationProcess process = new DeleteApplicationProcess(listener, argoCDClient, applicationName,
                 cascade);
-        getResult(process);
+        getResultTimeoutAborts(process);
     }
 
-    private <T> Object getResult(Process<T> process) throws AbortException, ProcessException {
-        this.processExecution = new TimeoutExecution<>(this.listener, process, this.timeout);
+    private <T> Object getResult(Process<T> process) throws AbortException, TimeoutException,
+            ProcessException {
         try {
+            lock.lockInterruptibly();
+            this.processExecution = new TimeoutExecution<>(this.listener, process, this.timeout);
             ProcessResult<?> result = this.processExecution.run();
             return result.get();
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            return null;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private <T> Object getResultTimeoutAborts(Process<T> process) throws AbortException, ProcessException {
+        try {
+            return getResult(process);
         } catch (TimeoutException exception) {
             throw new AbortException("Process timed out");
         }
