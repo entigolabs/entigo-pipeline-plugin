@@ -14,7 +14,7 @@
         <f:entry field="waitFailure" title="${%Fail the build when exceeding timeout}">
             <f:checkbox default="true"/>
         </f:entry>
-        <f:entry field="waitTimeout" title="${%ArgoCD action wait timeout}">
+        <f:entry field="waitTimeout" title="${%ArgoCD request timeout}">
             <f:number />
         </f:entry>
     </f:block>

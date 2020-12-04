@@ -11,59 +11,48 @@ import java.util.concurrent.*;
  * Author: Märt Erlenheim
  * Date: 2020-10-29
  */
-public class TimeoutExecution {
+public class TimeoutExecution<T> {
 
-    private final AbstractProcess process;
+    private final Process<T> process;
     private final TaskListener listener;
     private final long end;
-    private boolean waitFailure = true;
-    private transient ScheduledFuture<?> timeoutTask = null;
-    private transient Future<?> processTask = null;
 
-    public TimeoutExecution(AbstractProcess process, long timeout, TaskListener listener) {
+    public TimeoutExecution(TaskListener listener, Process<T> process, long timeout) {
         this.process = process;
         this.listener = listener;
         end = System.currentTimeMillis() + (timeout * 1000);
     }
 
-    public void setWaitFailure(boolean waitFailure) {
-        this.waitFailure = waitFailure;
-    }
-
-    public void start() {
+    public ProcessResult<T> run() throws TimeoutException {
         long delay = end - System.currentTimeMillis();
         if (delay > 0) {
-            timeoutTask = Timer.get().schedule(() -> {
+            try {
+                return Timer.get().submit(this::process).get(delay, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                return ProcessResult.failure(new AbortException("Process thread was interrupted"));
+            } catch (ExecutionException exception) {
+                return ProcessResult.failure(exception);
+            } catch (TimeoutException exception) {
                 ListenerUtil.error(listener, "Process timed out, stopping the process");
                 stop();
-                if (waitFailure) {
-                    process.failure(new AbortException("Process timed out"));
-                } else {
-                    ListenerUtil.error(listener, "waitFailure was False, continuing build");
-                    process.success(null);
-                }
-            }, delay, TimeUnit.MILLISECONDS);
-            processTask = Timer.get().submit(() -> {
-                try {
-                    process.start();
-                } catch (Exception exception) {
-                    process.failure(exception);
-                }
-                timeoutTask.cancel(true); // Need to cancel or it causes an already delivered failure
-            });
+                throw exception;
+            }
         } else {
-            process.failure(new AbortException("Process timed out during a break"));
+            stop();
+            return ProcessResult.failure(new AbortException("Timeout expired during a break"));
         }
     }
 
-    public void stop() {
-        if (timeoutTask != null) {
-            timeoutTask.cancel(true);
+    public ProcessResult<T> process() {
+        try {
+            return process.start();
+        } catch (Exception exception) {
+            return ProcessResult.failure(exception);
         }
-        if (processTask != null) {
-            processTask.cancel(true);
-        }
+    }
+
+    public synchronized void stop() {
         process.stop();
     }
-
 }

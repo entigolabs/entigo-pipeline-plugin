@@ -1,12 +1,14 @@
 package io.jenkins.plugins.entigo.pipeline.argocd.process;
 
+import hudson.AbortException;
+
 /**
  * Author: Märt Erlenheim
  * Date: 2020-11-04
  */
-public interface Process {
+public interface Process<T> {
 
-    void start();
+    ProcessResult<T> start() throws AbortException;
 
     void stop();
 }

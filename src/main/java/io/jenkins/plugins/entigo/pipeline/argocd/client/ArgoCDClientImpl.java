@@ -35,6 +35,7 @@ public class ArgoCDClientImpl implements ArgoCDClient {
 
     private static final String ARGOCD_API_PATH = "api/v1/";
     private static final Long DEFAULT_CONNECT_TIMEOUT = 30000L;
+    private static final Long DEFAULT_READ_TIMEOUT = 30000L;
 
     private final Client restClient;
     private final WebTarget apiTarget;
@@ -48,6 +49,7 @@ public class ArgoCDClientImpl implements ArgoCDClient {
     private Client buildClient(boolean ignoreCertificateErrors) throws ClientException {
         ClientBuilder clientBuilder = ClientBuilder.newBuilder()
                 .connectTimeout(DEFAULT_CONNECT_TIMEOUT, TimeUnit.MILLISECONDS)
+                .readTimeout(DEFAULT_READ_TIMEOUT, TimeUnit.MILLISECONDS)
                 .register(JacksonJsonProvider.class)
                 .register(JacksonConfiguration.class);
 
@@ -83,14 +85,30 @@ public class ArgoCDClientImpl implements ArgoCDClient {
     @Override
     public Application getApplication(String applicationName, String projectName) {
         Map<String, Object> queryParams = projectName == null ? null : Collections.singletonMap("project", projectName);
-        return getRequest("applications/{name}", Application.class,
-                Collections.singletonMap("name", applicationName), queryParams);
+        try {
+            return getRequest("applications/{name}", Application.class,
+                    Collections.singletonMap("name", applicationName), queryParams);
+        } catch (ArgoCDException exception) {
+            if (exception.getCode() == 5) {
+                throw new NotFoundException(String.format("Application %s not found", applicationName));
+            } else {
+                throw exception;
+            }
+        }
     }
 
     @Override
     public Application syncApplication(String applicationName, ApplicationSyncRequest request) {
-        return postRequest("applications/{name}/sync", Application.class, request,
-                Collections.singletonMap("name", applicationName), null);
+        try {
+            return postRequest("applications/{name}/sync", Application.class, request,
+                    Collections.singletonMap("name", applicationName), null);
+        } catch (ArgoCDException exception) {
+            if (exception.getCode() == 9) {
+                throw new RetryableException(exception.getMessage(), exception);
+            } else {
+                throw exception;
+            }
+        }
     }
 
     @Override
@@ -137,9 +155,11 @@ public class ArgoCDClientImpl implements ArgoCDClient {
             setRequestProperties(target, properties);
             return target.request(MediaType.APPLICATION_JSON).method(method, Entity.json(request), responseType);
         } catch (WebApplicationException exception) {
+            // Mostly HTTP errors like 403, 404 etc
             throw getResponseException(exception);
         } catch (ProcessingException exception) {
-            throw new ResponseException(ProcessingExceptionUtil.getExceptionMessage(exception), exception);
+            // Mostly IO exceptions
+            throw new RetryableException(ProcessingExceptionUtil.getExceptionMessage(exception), exception);
         }
     }
 
@@ -165,14 +185,11 @@ public class ArgoCDClientImpl implements ArgoCDClient {
         if (response != null && response.hasEntity()) {
             try {
                 ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-                if (errorResponse.getCode() == 5) {
-                    return new NotFoundException("Artifact was not found");
-                }
                 if (StringUtils.isNotEmpty(errorResponse.getError())) {
-                    return new ResponseException(errorResponse.getError());
+                    return new ArgoCDException(errorResponse.getError(), errorResponse.getCode());
                 }
             } catch (ProcessingException readException) {
-                // Failed to parse json entity, probably caused by wrong content-type
+                throw new ArgoCDException("Failed to parse ArgoCD error response", -1, exception);
             }
         }
         return new ResponseException(exception.getMessage(), exception);

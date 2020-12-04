@@ -6,6 +6,8 @@ package io.jenkins.plugins.entigo.pipeline.rest;
  */
 public class ResponseException extends RuntimeException {
 
+    private static final long serialVersionUID = 8621672386353776785L;
+
     public ResponseException(String message) {
         super(message);
     }

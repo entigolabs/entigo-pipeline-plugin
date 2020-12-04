@@ -16,11 +16,11 @@ public class ProcessingExceptionUtil {
         Throwable cause = exception.getCause();
         if (cause != null) {
             if (cause.getMessage() != null) {
-                return cause.getMessage();
+                return cause.getClass().getSimpleName() + ": " + cause.getMessage();
             } else if (cause.getCause() != null && cause.getCause().getMessage() != null) {
-                return cause.getCause().getMessage();
+                return cause.getCause().getClass().getSimpleName() + ": " + cause.getCause().getMessage();
             }
         }
-        return "Unknown exception: " + exception.getMessage();
+        return exception.getMessage();
     }
 }

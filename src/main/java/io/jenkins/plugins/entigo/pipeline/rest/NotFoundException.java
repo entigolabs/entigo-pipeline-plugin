@@ -6,6 +6,8 @@ package io.jenkins.plugins.entigo.pipeline.rest;
  */
 public class NotFoundException extends ResponseException {
 
+    private static final long serialVersionUID = 8467191275463542399L;
+
     public NotFoundException(String message) {
         super(message);
     }
