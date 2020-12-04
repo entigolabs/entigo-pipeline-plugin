@@ -1,6 +1,10 @@
 # Changelog
 
-## [Unreleased](https://github.com/entigolabs/entigo-pipeline-plugin/compare/v9...HEAD)
+## [Unreleased](https://github.com/entigolabs/entigo-pipeline-plugin/compare/v10...HEAD)
+
+## [v10](https://github.com/entigolabs/entigo-pipeline-plugin/tree/v10) (2020-12-04)
+
+[Full Changelog](https://github.com/entigolabs/entigo-pipeline-plugin/compare/v9...v10)
 
 ### Added
 - Unified retry process with timeout for ArgoCD requests [\#7](https://github.com/entigolabs/entigo-pipeline-plugin/pull/7)
