@@ -3,6 +3,7 @@
 Jenkins plugin for building CI/CD pipelines on top of Kubernetes and ArgoCD.
 
 * [Introduction](#introduction)
+* [Installation](#installation)
 * [ArgoCD Integration](#argocd-integration)
     * [Configuration](#argocd-configuration)
     * [Environmental variables](#argocd-environmental-variables)
@@ -110,7 +111,7 @@ Minimal usage example
 
 Full example
 
-```getArgoApp connectionSelector: 'selector-value', name: 'application-name', projectName: 'project-name'```
+```getArgoApp connectionSelector: 'selector-value', name: 'application-name', projectName: 'project-name', waitTimeout: 60```
 
 #### deleteArgoApp
 
@@ -127,7 +128,7 @@ Minimal usage example
 
 Full example
 
-```deleteArgoApp cascade: true, connectionSelector: 'selector-value', name: 'application-name'```
+```deleteArgoApp cascade: true, connectionSelector: 'selector-value', name: 'application-name', waitTimeout: 60```
 
 #### listArgoConnections
 
@@ -162,9 +163,9 @@ pipeline {
                 script {
                     appInfo=getArgoApp name: 'application-name', connectionSelector: 'connection-name'
                 }
-                echo 'Application repoURL: ' + appinfo.repoUrl
-                echo 'Application target revision: ' + appinfo.revision
-                echo 'Application path: ' + appinfo.path
+                echo 'Application repoURL: ' + appInfo.repoUrl
+                echo 'Application target revision: ' + appInfo.revision
+                echo 'Application path: ' + appInfo.path
                 syncArgoApp name: 'application-name', connectionSelector: 'connection-name'
             }
         }
