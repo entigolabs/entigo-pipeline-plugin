@@ -4,15 +4,17 @@ import hudson.console.ConsoleLogFilter;
 import hudson.console.LineTransformationOutputStream;
 import hudson.model.Run;
 import hudson.util.Secret;
-import org.jenkinsci.plugins.credentialsbinding.masking.SecretPatterns;
+import org.jenkinsci.plugins.credentialsbinding.masking.SecretPatternFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Author: Märt Erlenheim
@@ -22,11 +24,14 @@ public class SecretsFilter extends ConsoleLogFilter implements Serializable {
 
     private static final long serialVersionUID = 1;
 
+    private static final Comparator<String> BY_LENGTH_DESCENDING =
+            Comparator.comparingInt(String::length).reversed().thenComparing(String::compareTo);
+
     private final Secret pattern;
-    private String charsetName;
+    private final String charsetName;
 
     public SecretsFilter(Collection<String> secrets, String charsetName) {
-        pattern = Secret.fromString(SecretPatterns.getAggregateSecretPattern(secrets).pattern());
+        this.pattern = createPattern(secrets);
         if (charsetName == null) {
             this.charsetName = StandardCharsets.UTF_8.name();
         } else {
@@ -35,6 +40,19 @@ public class SecretsFilter extends ConsoleLogFilter implements Serializable {
     }
 
     // Taken from credentials-binding plugin
+    private Secret createPattern(Collection<String> secrets) {
+        String pattern = secrets.stream()
+                .filter(input -> !input.isEmpty())
+                .flatMap(input ->
+                        SecretPatternFactory.all().stream().flatMap(factory ->
+                                factory.getEncodedForms(input).stream()))
+                .sorted(BY_LENGTH_DESCENDING)
+                .distinct()
+                .map(Pattern::quote)
+                .collect(Collectors.joining("|"));
+        return Secret.fromString(Pattern.compile(pattern).pattern());
+    }
+
     @Override public OutputStream decorateLogger(Run _ignore, final OutputStream logger) {
         final Pattern p = Pattern.compile(pattern.getPlainText());
         return new LineTransformationOutputStream() {
