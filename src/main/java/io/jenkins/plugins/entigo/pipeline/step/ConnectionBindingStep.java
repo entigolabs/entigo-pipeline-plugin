@@ -5,15 +5,14 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.EnvVars;
 import hudson.Extension;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+import hudson.console.ConsoleLogFilter;
 import hudson.model.Run;
 import io.jenkins.plugins.entigo.pipeline.argocd.config.ArgoCDConnection;
 import io.jenkins.plugins.entigo.pipeline.argocd.config.ArgoCDConnectionsProperty;
 import io.jenkins.plugins.entigo.pipeline.util.CredentialsUtil;
+import io.jenkins.plugins.entigo.pipeline.util.SecretsFilter;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.jenkinsci.plugins.workflow.steps.*;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -57,16 +56,20 @@ public class ConnectionBindingStep extends Step {
 
         @Override
         public boolean start() throws Exception {
+            Run<?,?> run = getContext().get(Run.class);
             Map<String, String> connectionMap = new HashMap<>();
             ArgoCDConnection connection = ArgoCDConnectionsProperty.getConnection(getContext().get(Run.class),
                     getContext().get(EnvVars.class), connectionSelector);
             StringCredentials credentials = CredentialsUtil.findCredentialsById(connection.getCredentialsId(),
                     StringCredentials.class, URIRequirementBuilder.fromUri(connection.getUri()).build());
             connectionMap.put(ARGO_CD_SERVER_ENV, connection.getUri().replaceAll("(?i)^http[s]?://", ""));
-            connectionMap.put(ARGO_CD_TOKEN_ENV, credentials.getSecret().getPlainText());
+            String token = credentials.getSecret().getPlainText();
+            connectionMap.put(ARGO_CD_TOKEN_ENV, token);
             getContext().newBodyInvoker().
                     withContext(EnvironmentExpander.merge(getContext().get(EnvironmentExpander.class),
                             EnvironmentExpander.constant(connectionMap))).
+                    withContext(BodyInvoker.mergeConsoleLogFilters(getContext().get(ConsoleLogFilter.class),
+                            new SecretsFilter(Collections.singleton(token), run.getCharset().name()))).
                     withCallback(BodyExecutionCallback.wrap(getContext())).
                     start();
             return false;
@@ -98,7 +101,7 @@ public class ConnectionBindingStep extends Step {
 
         @Override
         public Set<? extends Class<?>> getRequiredContext() {
-            return Collections.emptySet();
+            return Collections.singleton(Run.class);
         }
 
     }
