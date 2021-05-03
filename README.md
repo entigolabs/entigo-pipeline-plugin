@@ -150,6 +150,29 @@ pipeline {
 }
 ```
 
+#### withArgoCDConnection
+
+Binds env variables based on the given connection selector.
+* ARGO_CD_SERVER - ArgoCD Host uri
+* ARGO_CD_TOKEN - ArgoCD Credentials user authentication token
+
+Parameters:
+* connectionSelector - value which is used to select a connection based on the configured connection matchers.
+
+Example use case
+
+```
+steps{
+  script{
+    withArgoCDConnection(connectionSelector:"selector-value"){
+      echo env.ARGO_CD_SERVER
+      echo env.ARGO_CD_TOKEN
+      ...
+    }
+  }
+}
+```
+
 ### ArgoCD Working example
 
 When creating a connection in the configuration, don't uncheck the matcher generation. Replace the connection-name value with the name of a pre-configured connection and application-name with the name of the ArgoCD application to synchronize.

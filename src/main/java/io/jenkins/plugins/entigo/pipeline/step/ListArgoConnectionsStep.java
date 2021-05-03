@@ -6,10 +6,10 @@ import org.jenkinsci.plugins.workflow.steps.*;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Author: Märt Erlenheim
@@ -37,8 +37,8 @@ public class ListArgoConnectionsStep extends Step {
         @Override
         protected List<String> run() {
             PluginConfiguration configuration = PluginConfiguration.get();
-            // keySet is not serializable so can't be returned from step
-            return new ArrayList<>(configuration.getNamedArgoCDConnections().keySet());
+            // keySet is not serializable so can't be returned from step, sorted for better readability
+            return configuration.getNamedArgoCDConnections().keySet().stream().sorted().collect(Collectors.toList());
         }
     }
 

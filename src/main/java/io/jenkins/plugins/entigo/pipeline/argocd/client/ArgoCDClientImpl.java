@@ -189,7 +189,8 @@ public class ArgoCDClientImpl implements ArgoCDClient {
                     return new ArgoCDException(errorResponse.getError(), errorResponse.getCode());
                 }
             } catch (ProcessingException readException) {
-                throw new ArgoCDException("Failed to parse ArgoCD error response", -1, exception);
+                throw new ArgoCDException("Failed to parse ArgoCD error response, message: " + exception.getMessage(),
+                        -1, exception);
             }
         }
         return new ResponseException(exception.getMessage(), exception);

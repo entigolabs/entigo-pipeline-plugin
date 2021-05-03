@@ -1,6 +1,13 @@
 # Changelog
 
-## [Unreleased](https://github.com/entigolabs/entigo-pipeline-plugin/compare/v10...HEAD)
+## [Unreleased](https://github.com/entigolabs/entigo-pipeline-plugin/compare/v11...HEAD)
+
+## [v11](https://github.com/entigolabs/entigo-pipeline-plugin/tree/v11) (2021-05-03)
+
+[Full Changelog](https://github.com/entigolabs/entigo-pipeline-plugin/compare/v10...v11)
+
+### Added
+- withArgoCDConnection wrapper step [\#8](https://github.com/entigolabs/entigo-pipeline-plugin/pull/8)
 
 ## [v10](https://github.com/entigolabs/entigo-pipeline-plugin/tree/v10) (2020-12-04)
 
