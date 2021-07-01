@@ -2,6 +2,8 @@
 
 ## [Unreleased](https://github.com/entigolabs/entigo-pipeline-plugin/compare/v11...HEAD)
 
+- Changed argocd sync strategy from apply to hook
+
 ## [v11](https://github.com/entigolabs/entigo-pipeline-plugin/tree/v11) (2021-05-03)
 
 [Full Changelog](https://github.com/entigolabs/entigo-pipeline-plugin/compare/v10...v11)

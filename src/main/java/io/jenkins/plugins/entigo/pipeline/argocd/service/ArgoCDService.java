@@ -48,7 +48,7 @@ public class ArgoCDService {
 
     private ApplicationSyncRequest createSyncRequest(String applicationName) {
         SyncStrategy syncStrategy = new SyncStrategy();
-        syncStrategy.setApply(new SyncStrategyApply(true));
+        syncStrategy.setHook(new SyncStrategyHook(true));
         ApplicationSyncRequest syncRequest = new ApplicationSyncRequest();
         syncRequest.setName(applicationName);
         syncRequest.setPrune(true);

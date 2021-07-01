@@ -1,15 +1,19 @@
 package io.jenkins.plugins.entigo.pipeline.argocd.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class SyncStrategyHook {
 
-  private SyncStrategyApply syncStrategyApply;
+  private final Boolean force;
 
-  public SyncStrategyApply getSyncStrategyApply() {
-    return syncStrategyApply;
+  @JsonCreator
+  public SyncStrategyHook(@JsonProperty("force") Boolean force) {
+    this.force = force;
   }
 
-  public void setSyncStrategyApply(SyncStrategyApply syncStrategyApply) {
-    this.syncStrategyApply = syncStrategyApply;
+  public Boolean getForce() {
+    return force;
   }
 }
 
